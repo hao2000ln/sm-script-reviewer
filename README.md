@@ -1,11 +1,11 @@
-# SM ScriptLibrary Reviewer — Sprint 1 scaffold
+# SM ScriptLibrary Reviewer
 
 Independent, read-only JavaScript source inspection for OpenText Service Manager ScriptLibrary.
 
 ## Setup
 
 ```bash
-npm install
+npm ci
 npm test
 npm run review -- inspect ./examples
 npm run review -- inspect ./examples --json
@@ -26,7 +26,7 @@ npm run review -- inspect ./examples --json
 - Validate against real SM ScriptLibrary samples before treating parser coverage as complete.
 
 ## Codex collaboration contract
-1. Work on a separate feature branch; never change production SM.
+1. Work on a separate feature branch created by the project owner; never change production SM.
 2. Implement one bounded task at a time, with positive/negative/edge-case tests.
 3. Provide changed-file list, test results, assumptions, and known limitations.
 4. Request independent architecture/code review before merge.
@@ -41,5 +41,12 @@ TypeScript compiler API. All `end` locations are exclusive.
 Parser/indexer decisions for Sprint 1 are recorded in
 [`docs/decisions/0001-parser-indexing.md`](docs/decisions/0001-parser-indexing.md).
 
-## First Codex task
-Review and harden `src/parser/analyze.ts`: leading-comment association, multiline/inline comments, function expressions assigned to object properties, nested functions, parse recovery, and source locations. Add regression fixtures. Keep the public `AnalysisResult` contract stable or explain proposed changes.
+Project scope, roadmap, and collaboration rules are recorded in
+[`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) and [`AGENTS.md`](AGENTS.md).
+
+## Delivery status
+
+Current sprint scope and delivery status are maintained in
+[`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md). Treat roadmap entries as plans;
+inspect source, tests, and the relevant pull request before concluding that a
+capability is implemented.
