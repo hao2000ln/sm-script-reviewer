@@ -20,6 +20,13 @@ export const unreachableCodeRule: Rule = {
         visitStatementList(node.statements);
         return;
       }
+      if (ts.isCaseClause(node) || ts.isDefaultClause(node)) {
+        // Completion of the switch as a whole is deliberately unsupported, but
+        // statements after a definite exit inside one clause are still local
+        // and safe to classify.
+        visitStatementList(node.statements);
+        return;
+      }
       ts.forEachChild(node, visit);
     };
 

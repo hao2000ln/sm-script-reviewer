@@ -6,7 +6,7 @@ export const unconditionalLoopRule: Rule = {
   metadata: {
     id: 'SM-LOOP-001',
     title: 'Unconditional loop without a syntactic exit',
-    description: 'Reports while(true), do/while(true), and for(;;) loops with no visible exit.',
+    description: 'Reports unconditional loop syntax with no recognized possible exit.',
     classification: 'deterministic',
     defaultEnabled: true,
     defaultSeverity: 'warning',
@@ -18,14 +18,14 @@ export const unconditionalLoopRule: Rule = {
       if (isUnconditionalLoop(node) && !hasSyntacticLoopExit(node)) {
         const range = context.rangeOf(node);
         findings.push({
-          message: 'Unconditional loop has no syntactic break, return, or throw exit.',
+          message: 'Unconditional loop has no recognized syntactic break, return, or throw exit.',
           range,
           evidence: [{
             kind: 'control-flow',
-            message: 'The loop condition is unconditional and its body has no visible exit.',
+            message: 'The condition is unconditional and no possible exit is visible in the supported syntax subset.',
             range,
           }],
-          suggestion: 'Add an explicit, reachable exit condition or use a bounded loop.',
+          suggestion: 'Review termination behavior and add an explicit exit condition if the loop is not intentionally unbounded.',
         });
       }
       ts.forEachChild(node, visit);

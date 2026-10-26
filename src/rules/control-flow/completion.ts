@@ -17,8 +17,10 @@ export function statementDefinitelyTerminates(statement: ts.Statement): boolean 
       && statementDefinitelyTerminates(statement.elseStatement);
   }
 
-  // Switch and try/finally completion require path-sensitive handling. They are
-  // intentionally excluded from this safe subset.
+  // Switch-wide and try/catch/finally completion require path-sensitive
+  // handling. They are intentionally excluded from this safe subset. Their
+  // nested blocks and individual switch clauses are still inspected by the
+  // rule visitor for local statements following a direct exit.
   return false;
 }
 

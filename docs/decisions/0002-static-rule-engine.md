@@ -49,11 +49,15 @@ with the same certainty as deterministic checks.
     JSON schema require a separate integration decision and regression tests.
 12. Implement `SM-CODE-001` only for statements following a definitely
     terminating return, throw, break, continue, block, or two-sided if/else in
-    the same statement list. Complex switch and try/finally completion is outside
-    this safe subset.
+    the same statement list. Individual `case`/`default` statement lists are
+    inspected locally, but switch-wide and try/catch/finally completion are
+    outside this safe subset.
 13. Implement `SM-LOOP-001` only for `while (true)`, `do/while (true)`, and
     `for (;;)`, suppressing findings when a syntactic break, return, or throw may
     exit the loop. Nested loop and switch breaks do not count as outer-loop exits.
+    The rule remains deterministic because it reports only the proven syntactic
+    property "unconditional condition with no recognized exit"; it does not
+    claim that runtime non-termination is proven.
 14. Register `SM-CMT-002` and `SM-CMT-003` as default-disabled heuristic rules.
     They require confidence and use deliberately narrow code-like, empty-comment,
     and separator-only patterns.
@@ -71,7 +75,16 @@ with the same certainty as deterministic checks.
 - `SM-DBG-001` detects the exact syntax `print(...)`; it excludes property calls
   such as `obj.print(...)`. It does not perform binding analysis, so a locally
   shadowed identifier named `print` is still reported as a policy violation.
-- Commented-out code, subjective comment quality, unreachable code, and loop
-  analysis remain outside this implementation increment. They require explicit
-  heuristic or control-flow acceptance tests before being enabled.
+- `SM-CODE-001` deliberately does not infer completion of an entire switch or
+  try/catch/finally statement. It can therefore miss unreachable code after such
+  constructs, while still detecting statements after direct exits inside their
+  nested blocks and switch clauses.
+- `SM-LOOP-001` does not evaluate branch reachability. Any correctly targeted
+  syntactic break, return, or throw suppresses the finding, including one under
+  `if (false)`. This creates conservative false negatives and prevents the
+  finding from overstating proof of an infinite runtime loop.
+- Calls inside an unconditional loop may throw, terminate the SM request, or not
+  return. Static syntax alone cannot establish those runtime behaviors.
+- `SM-CMT-002` and `SM-CMT-003` remain heuristic and default-disabled because
+  commented-out code and comment usefulness can be project-dependent.
 

@@ -13,6 +13,12 @@ export function isUnconditionalLoop(node: ts.Node): node is LoopStatement {
   return false;
 }
 
+/**
+ * Finds a possible syntactic exit from the selected loop. This intentionally
+ * does not prove reachability: even an exit under `if (false)` suppresses a
+ * finding so SM-LOOP-001 cannot be read as proof of runtime non-termination.
+ * Function and callback bodies have independent control flow and are skipped.
+ */
 export function hasSyntacticLoopExit(loop: LoopStatement): boolean {
   let hasExit = false;
 

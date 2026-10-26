@@ -83,6 +83,80 @@ function outer() {
   assert.equal(findings[0].range.start.line, 6);
 });
 
+test('SM-CODE-001 keeps nested function control flow independent', () => {
+  const findings = findingsFor(`
+// Outer documentation.
+function outer() {
+  // Inner documentation.
+  function inner() {
+    return true;
+    print('unreachable only inside inner');
+  }
+  print('reachable in outer');
+}
+`, 'SM-CODE-001');
+
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].range.start.line, 7);
+});
+
+test('SM-CODE-001 analyzes case statement lists without claiming switch completion', () => {
+  const findings = findingsFor(`
+// Documentation.
+function example(value, flag) {
+  switch (value) {
+    case 1:
+      break;
+      print('unreachable after break');
+    case 2:
+      if (flag) break;
+      print('reachable through false branch');
+      break;
+    default:
+      return false;
+      print('unreachable after return');
+  }
+  print('reachable after switch');
+}
+`, 'SM-CODE-001');
+
+  assert.deepEqual(findings.map(({ range }) => range.start.line), [7, 14]);
+});
+
+test('SM-CODE-001 remains conservative for try/catch/finally completion', () => {
+  const findings = findingsFor(`
+// Documentation.
+function example(flag) {
+  try {
+    if (flag) return true;
+  } catch (error) {
+    throw error;
+    print('unreachable inside catch');
+  } finally {
+    cleanup();
+  }
+  print('possibly reachable after try');
+}
+`, 'SM-CODE-001');
+
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].range.start.line, 8);
+});
+
+test('SM-CODE-001 emits one finding per unreachable outer statement', () => {
+  const findings = findingsFor(`
+// Documentation.
+function example() {
+  return true;
+  var expression = function () { return false; };
+  var arrow = () => { throw new Error('not executed'); };
+  print('also unreachable');
+}
+`, 'SM-CODE-001');
+
+  assert.deepEqual(findings.map(({ range }) => range.start.line), [5, 6, 7]);
+});
+
 test('SM-LOOP-001 reports unconditional loops without a syntactic exit', () => {
   const findings = findingsFor(`
 while (true) { print('forever'); }
@@ -116,6 +190,71 @@ labelled: while (true) { break labelled; }
 
   assert.equal(findings.length, 1);
   assert.equal(findings[0].range.start.line, 2);
+});
+
+test('SM-LOOP-001 ignores return and throw inside nested functions or callbacks', () => {
+  const findings = findingsFor(`
+while (true) { function inner() { return; } }
+while (true) { (() => { throw new Error('callback'); })(); }
+`, 'SM-LOOP-001');
+
+  assert.deepEqual(findings.map(({ range }) => range.start.line), [2, 3]);
+});
+
+test('SM-LOOP-001 handles labeled exits by their actual target', () => {
+  const findings = findingsFor(`
+outer: while (true) { break outer; }
+while (true) { inner: { break inner; } }
+`, 'SM-LOOP-001');
+
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].range.start.line, 3);
+});
+
+test('SM-LOOP-001 does not treat continue as a loop exit', () => {
+  const findings = findingsFor('while (true) { continue; }', 'SM-LOOP-001');
+
+  assert.equal(findings.length, 1);
+});
+
+test('SM-LOOP-001 conservatively accepts a syntactic exit with unknown reachability', () => {
+  const findings = findingsFor(
+    'while (true) { if (false) break; }',
+    'SM-LOOP-001',
+  );
+
+  // The lightweight analysis does not evaluate constant branches. Suppressing
+  // the finding avoids overstating that the loop is proven infinite.
+  assert.equal(findings.length, 0);
+});
+
+test('control-flow findings satisfy the public finding contract deterministically', () => {
+  const content = `
+// Documentation.
+function example() {
+  return true;
+  print('unreachable');
+}
+while (true) { work(); }
+`;
+  const first = run(content).findings.filter(({ ruleId }) => (
+    ruleId === 'SM-CODE-001' || ruleId === 'SM-LOOP-001'
+  ));
+  const second = run(content).findings.filter(({ ruleId }) => (
+    ruleId === 'SM-CODE-001' || ruleId === 'SM-LOOP-001'
+  ));
+
+  assert.equal(first.length, 2);
+  assert.deepEqual(first, second);
+  assert.equal(new Set(first.map(({ fingerprint }) => fingerprint)).size, 2);
+  for (const finding of first) {
+    assert.equal(finding.severity, 'warning');
+    assert.equal(finding.classification, 'deterministic');
+    assert.equal(finding.confidence, 1);
+    assert.ok(finding.range.end.offset > finding.range.start.offset);
+    assert.ok(finding.evidence.length > 0);
+    assert.ok(finding.fingerprint.length > 0);
+  }
 });
 
 test('control-flow rules skip syntax-invalid source', () => {

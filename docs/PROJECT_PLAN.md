@@ -97,7 +97,7 @@ flowchart TD
 - Phát hiện `print()` debug/test.
 - Nhận diện code bị comment hoặc comment không cần thiết dưới dạng heuristic finding có confidence.
 - Phát hiện các trường hợp unreachable code chứng minh được bằng control-flow analysis.
-- Phát hiện một số mẫu vòng lặp vô hạn có thể xác định chắc chắn; không tuyên bố phát hiện đầy đủ.
+- Phát hiện cú pháp vòng lặp vô điều kiện không có exit được nhận diện; đây là kiểm tra cú pháp deterministic, không phải bằng chứng chắc chắn rằng runtime sẽ chạy vô hạn.
 
 **Đầu ra:** Engine trả về findings gồm lỗi, vị trí, mức độ và đề xuất xử lý.
 
