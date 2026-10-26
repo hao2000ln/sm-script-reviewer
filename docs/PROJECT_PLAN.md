@@ -75,7 +75,7 @@ flowchart TD
 - Chuẩn hóa source location.
 - Xử lý parse diagnostics và regression tests.
 
-**Tiến độ:** Phase A Audit hoàn tất; Phase B đã có bản triển khai và [PR #1](https://github.com/hao2000ln/sm-script-reviewer/pull/1), đang chờ xử lý các ý kiến independent review trước khi merge.
+**Tiến độ:** Phase A Audit và Phase B implementation đã hoàn tất local, bao gồm các regression case bổ sung sau independent review. [PR #1](https://github.com/hao2000ln/sm-script-reviewer/pull/1) cần được người quản lý dự án cập nhật, sau đó ChatGPT review lại trước khi nghiệm thu hoặc merge. Mẫu `examples/sample.js` chỉ là smoke-test fixture, chưa thay thế validation trên source SM thực tế.
 
 **Đầu ra:** Parser ổn định làm nền tảng cho các static rules.
 
@@ -219,12 +219,12 @@ flowchart TD
 |---|---|
 | Kiến trúc tổng thể | Đã xác định |
 | Sprint 1 — Phase A Audit | Hoàn tất |
-| Sprint 1 — Phase B Implementation | Hoàn tất bản đầu |
-| PR #1 | Chờ chỉnh sửa theo review |
-| Sprint 1 nghiệm thu | Chưa hoàn tất |
+| Sprint 1 — Phase B Implementation | Hoàn tất local |
+| PR #1 | Chờ người quản lý dự án cập nhật và yêu cầu review lại |
+| Sprint 1 nghiệm thu | Chờ independent review và quyết định merge |
 | Sprint 2 | Chưa bắt đầu |
 
-**Bước tiếp theo:** Codex bổ sung regression tests và xử lý các vấn đề trong PR #1 → người quản lý dự án cập nhật PR → ChatGPT review lại → người quản lý dự án merge nếu đạt yêu cầu → hoàn thiện Sprint 1 và chuẩn bị Sprint 2.
+**Bước tiếp theo:** Người quản lý dự án kiểm tra diff, commit và cập nhật PR #1 → ChatGPT review độc lập → người quản lý dự án merge nếu đạt yêu cầu → xác nhận nghiệm thu Sprint 1 → thiết kế contract cho Sprint 2. Validation trên source SM đại diện phải được thực hiện trước khi tuyên bố parser coverage hoàn chỉnh.
 
 ## 6. Định hướng lâu dài
 

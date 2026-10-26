@@ -36,6 +36,12 @@ tests demonstrate both cases.
    end-exclusive ranges.
 8. Return parser diagnostics and index nodes recovered by TypeScript, but do not
    claim that recovered AST nodes are semantically reliable around an error.
+9. For a variable statement with multiple declarators, associate a statement-level
+   comment only with a function in the first declarator. A later declarator must
+   have its own non-trailing comment directly adjacent to that declarator.
+10. For chained assignments such as `outer = inner = function () {}`, preserve
+    the nearest assignment target (`inner`) as the single function name while
+    using the outer expression statement as the leading-comment anchor.
 
 ## Consequences
 
@@ -45,5 +51,7 @@ tests demonstrate both cases.
   be absent from the comment index; diagnostics remain authoritative there.
 - Assignment names preserve their source form, such as `obj.load` or
   `namespace["quoted"]`.
+- `FunctionInfo` has a single `name`; outer aliases in chained assignments are
+  intentionally not represented in Sprint 1.
 - Accessors and constructors are not included in Sprint 1 because they are not
   among the approved function forms.

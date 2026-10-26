@@ -97,8 +97,13 @@ function getCommentAnchor(node: IndexedFunctionNode): ts.Node {
   const parent = expression.parent;
 
   if (parent && ts.isVariableDeclaration(parent) && parent.initializer === expression) {
-    if (ts.isVariableDeclarationList(parent.parent) && ts.isVariableStatement(parent.parent.parent)) {
-      return parent.parent.parent;
+    const declarationList = parent.parent;
+    if (
+      ts.isVariableDeclarationList(declarationList)
+      && declarationList.declarations[0] === parent
+      && ts.isVariableStatement(declarationList.parent)
+    ) {
+      return declarationList.parent;
     }
     return parent;
   }
@@ -113,8 +118,22 @@ function getCommentAnchor(node: IndexedFunctionNode): ts.Node {
     && parent.operatorToken.kind === ts.SyntaxKind.EqualsToken
     && parent.right === expression
   ) {
-    return ts.isExpressionStatement(parent.parent) ? parent.parent : parent;
+    return getOutermostAssignmentAnchor(parent);
   }
 
   return node;
+}
+
+function getOutermostAssignmentAnchor(assignment: ts.BinaryExpression): ts.Node {
+  let current: ts.Node = climbParentheses(assignment);
+
+  while (
+    ts.isBinaryExpression(current.parent)
+    && current.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken
+    && current.parent.right === current
+  ) {
+    current = climbParentheses(current.parent);
+  }
+
+  return ts.isExpressionStatement(current.parent) ? current.parent : current;
 }
