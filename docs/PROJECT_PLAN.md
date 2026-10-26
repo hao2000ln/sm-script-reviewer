@@ -55,9 +55,9 @@ flowchart TD
 
 | Sprint | Thời lượng | Trọng tâm | Trạng thái |
 |---|---|---|---|
-| 1 | 2 tuần | Core Foundation & Parser | Đang thực hiện |
-| 2 | 2 tuần | Static Rule Engine | Chưa bắt đầu |
-| 3 | 2 tuần | SM-Specific Rules & Reports | Chưa bắt đầu |
+| 1 | 2 tuần | Core Foundation & Parser | Hoàn tất và đã merge |
+| 2 | 2 tuần | Static Rule Engine | Hoàn tất local, chờ review phần control-flow/heuristic |
+| 3 | 2 tuần | SM-Specific Rules & Reports | Phase A hoàn tất local, chờ phê duyệt semantics |
 | 4 | 2 tuần | AI Review Engine | Chưa bắt đầu |
 | 5 | 2 tuần | VS Code Extension | Chưa bắt đầu |
 | 6 | 2 tuần | SM Connector & UAT | Chưa bắt đầu |
@@ -97,9 +97,11 @@ flowchart TD
 - Phát hiện `print()` debug/test.
 - Nhận diện code bị comment hoặc comment không cần thiết dưới dạng heuristic finding có confidence.
 - Phát hiện các trường hợp unreachable code chứng minh được bằng control-flow analysis.
-- Phát hiện một số mẫu vòng lặp vô hạn có thể xác định chắc chắn; không tuyên bố phát hiện đầy đủ.
+- Phát hiện cú pháp vòng lặp vô điều kiện không có exit được nhận diện; đây là kiểm tra cú pháp deterministic, không phải bằng chứng chắc chắn rằng runtime sẽ chạy vô hạn.
 
 **Đầu ra:** Engine trả về findings gồm lỗi, vị trí, mức độ và đề xuất xử lý.
+
+**Tiến độ:** Rule Engine foundation và hai rule `SM-CMT-001`, `SM-DBG-001` đã merge qua PR #2. Phần control-flow và heuristic gồm `SM-CODE-001`, `SM-LOOP-001`, `SM-CMT-002`, `SM-CMT-003` đã hoàn tất local với regression và acceptance tests, chờ independent review.
 
 **Tiêu chí hoàn thành:**
 - Có contract ổn định cho `Rule`, `RuleContext`, `Finding`, severity và source range.
@@ -113,7 +115,7 @@ flowchart TD
 **Mục tiêu:** Phân tích lỗi đặc thù OpenText SM.
 
 **Phạm vi:**
-- Kiểm tra `SCFile`, `doSelect()`, `getNext()`, `doClose()`.
+- Kiểm tra `SCFile`, `doSelect()` và `getNext()` theo API contract đã xác minh. Chỉ kiểm tra `doClose()` khi có tài liệu hoặc project evidence xác nhận lifecycle contract.
 - Kiểm tra return code.
 - Phát hiện vòng lặp không cập nhật điều kiện.
 - Phát hiện rủi ro trong SM query expressions; chỉ kiểm tra SQL đối với API hoặc custom integration đã được xác minh thực sự sử dụng SQL.
@@ -219,12 +221,14 @@ flowchart TD
 |---|---|
 | Kiến trúc tổng thể | Đã xác định |
 | Sprint 1 — Phase A Audit | Hoàn tất |
-| Sprint 1 — Phase B Implementation | Hoàn tất local |
-| PR #1 | Chờ người quản lý dự án cập nhật và yêu cầu review lại |
-| Sprint 1 nghiệm thu | Chờ independent review và quyết định merge |
-| Sprint 2 | Chưa bắt đầu |
+| Sprint 1 — Phase B Implementation | Hoàn tất và đã merge |
+| PR #1 | Đã merge |
+| Sprint 1 nghiệm thu | Hoàn tất ở mức source/test; validation source SM đại diện vẫn là giới hạn đã ghi nhận |
+| Sprint 2 foundation — PR #2 | Đã merge |
+| Sprint 2 control-flow/heuristics | Hoàn tất local, chờ independent review |
+| Sprint 3 Phase A | Hoàn tất local, `doClose` lifecycle đang bị chặn do thiếu evidence |
 
-**Bước tiếp theo:** Người quản lý dự án kiểm tra diff, commit và cập nhật PR #1 → ChatGPT review độc lập → người quản lý dự án merge nếu đạt yêu cầu → xác nhận nghiệm thu Sprint 1 → thiết kế contract cho Sprint 2. Validation trên source SM đại diện phải được thực hiện trước khi tuyên bố parser coverage hoàn chỉnh.
+**Bước tiếp theo:** Người quản lý dự án commit/push phần hoàn tất Sprint 2 → ChatGPT review độc lập → merge nếu đạt yêu cầu. Sau đó tách Sprint 3 Phase A thành branch/PR riêng để ChatGPT và project owner phê duyệt API evidence, rule specification và ADR 0003 trước khi triển khai SM-specific rules. Validation trên source SM đại diện vẫn bắt buộc trước khi tuyên bố coverage hoàn chỉnh.
 
 ## 6. Định hướng lâu dài
 
