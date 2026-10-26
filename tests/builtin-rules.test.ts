@@ -80,7 +80,11 @@ test('built-in rules do not run on syntax-invalid source', () => {
   assert.deepEqual(result.findings, []);
   assert.deepEqual(result.skippedRules, [
     { ruleId: 'SM-CMT-001', reason: 'syntax-errors' },
+    { ruleId: 'SM-CMT-002', reason: 'disabled' },
+    { ruleId: 'SM-CMT-003', reason: 'disabled' },
+    { ruleId: 'SM-CODE-001', reason: 'syntax-errors' },
     { ruleId: 'SM-DBG-001', reason: 'syntax-errors' },
+    { ruleId: 'SM-LOOP-001', reason: 'syntax-errors' },
   ]);
 });
 

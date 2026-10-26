@@ -47,6 +47,16 @@ with the same certainty as deterministic checks.
     syntax-invalid source.
 11. Keep the existing `inspect` CLI output unchanged. CLI review output and its
     JSON schema require a separate integration decision and regression tests.
+12. Implement `SM-CODE-001` only for statements following a definitely
+    terminating return, throw, break, continue, block, or two-sided if/else in
+    the same statement list. Complex switch and try/finally completion is outside
+    this safe subset.
+13. Implement `SM-LOOP-001` only for `while (true)`, `do/while (true)`, and
+    `for (;;)`, suppressing findings when a syntactic break, return, or throw may
+    exit the loop. Nested loop and switch breaks do not count as outer-loop exits.
+14. Register `SM-CMT-002` and `SM-CMT-003` as default-disabled heuristic rules.
+    They require confidence and use deliberately narrow code-like, empty-comment,
+    and separator-only patterns.
 
 ## Consequences
 

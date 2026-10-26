@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/tests/*.test.js",
+    "test:acceptance": "npm run build && node sprint2-acceptance.cjs",
     "review": "npm run build && node dist/src/cli/index.js"
   },
   "devDependencies": {
