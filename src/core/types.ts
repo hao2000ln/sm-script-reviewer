@@ -1,5 +1,6 @@
 export interface SourceDocument { id: string; filePath: string; content: string; hash: string; }
-export interface SourceLocation { line: number; column: number; }
+/** 1-based line/column with an end-exclusive UTF-16 offset. */
+export interface SourceLocation { line: number; column: number; offset: number; }
 export interface FunctionInfo { name: string; kind: string; start: SourceLocation; end: SourceLocation; leadingComment?: string; }
 export interface CommentInfo { kind: 'line'|'block'; text: string; start: SourceLocation; end: SourceLocation; }
 export interface ParseIssue { message: string; start: SourceLocation; }
