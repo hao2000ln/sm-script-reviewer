@@ -146,7 +146,7 @@ const first = function () {}, second = function () {};
 test('associates a direct comment with a later variable declarator', () => {
   const result = inspect(`
 const first = function () {},
-// Documents the second declarator.
+
 second = function () {};
 `);
 

@@ -24,6 +24,7 @@ test('discovers JavaScript recursively and excludes generated or hidden folders'
 
   try {
     await Promise.all([
+      
       mkdir(join(root, 'nested'), { recursive: true }),
       mkdir(join(root, '.hidden'), { recursive: true }),
       mkdir(join(root, 'dist'), { recursive: true }),
