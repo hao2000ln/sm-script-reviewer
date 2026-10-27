@@ -30,10 +30,12 @@ npm run review -- review ./examples --format html --output review.html
 - Report supported unhandled SCFile return-code and query-loop progress patterns.
 - Run single-file or batch CLI reviews with text, versioned JSON, or standalone
   HTML reports, configuration, filters, stable ordering, and deterministic exit codes.
+- Build provider-independent, function-level AI context offline with explicit
+  budgets, source grounding, response validation, and privacy-safe defaults.
 
 ## Not yet implemented
-- AI, VS Code extension, SM Connector, interprocedural SM analysis, and
-  unverified custom SM APIs.
+- Live AI providers and AI CLI/report integration, VS Code extension, SM
+  Connector, interprocedural SM analysis, and unverified custom SM APIs.
 - Mandatory SCFile `doClose()` analysis; no verified lifecycle contract has
   been accepted for that method.
 - Validate against real SM ScriptLibrary samples before treating parser coverage as complete.
@@ -65,6 +67,15 @@ empty directory is a successful empty review.
 
 The JSON contract is documented in
 [`docs/reporting-schema-v1.md`](docs/reporting-schema-v1.md).
+
+## AI foundation status
+
+AI is disabled by default. Sprint 4 Phase A contains only offline contracts,
+context selection, approximate token budgeting, validation, redaction hooks, and
+a fake provider for tests. It makes no network requests, requires no API key,
+does not expose AI CLI options, and never treats source comments as instructions.
+The architecture and live-provider prerequisites are documented in
+[`docs/decisions/0004-ai-review-architecture.md`](docs/decisions/0004-ai-review-architecture.md).
 
 ## Codex collaboration contract
 1. Work on a separate feature branch created by the project owner; never change production SM.
