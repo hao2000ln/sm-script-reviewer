@@ -13,3 +13,7 @@ export function review(
   return builtinRunner.run(createAnalysisArtifact(source), config);
 }
 
+export function validateReviewConfig(config: RuleSetConfig): void {
+  builtinRunner.validate(config);
+}
+

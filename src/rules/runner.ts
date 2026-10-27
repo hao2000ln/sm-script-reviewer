@@ -30,6 +30,10 @@ interface ResolvedRuleConfig {
 export class RuleRunner {
   constructor(private readonly registry: RuleRegistry) {}
 
+  validate(config: RuleSetConfig = {}): void {
+    validateAndResolveConfig(this.registry, config);
+  }
+
   run(artifact: AnalysisArtifact, config: RuleSetConfig = {}): RuleRunResult {
     const resolvedConfig = validateAndResolveConfig(this.registry, config);
     const context = createRuleContext(artifact);

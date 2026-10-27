@@ -1,8 +1,23 @@
 import { discoverSources, loadSource } from '../source/loader';
 import { analyze } from '../parser/analyze';
+import { runReviewCommand } from './review-command';
+
 async function main() {
   const [command, target, ...args] = process.argv.slice(2);
-  if (command !== 'inspect' || !target) { console.error('Usage: sm-review inspect <file-or-folder> [--json]'); process.exitCode = 2; return; }
+  if (command === 'review' && target) {
+    try {
+      process.exitCode = await runReviewCommand(target, args);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 2;
+    }
+    return;
+  }
+  if (command !== 'inspect' || !target) {
+    console.error('Usage: sm-review <inspect|review> <file-or-folder> [--json]');
+    process.exitCode = 2;
+    return;
+  }
   const files = await discoverSources(target);
   const results = [];
   for (const path of files) {
