@@ -19,10 +19,18 @@ npm run review -- inspect ./examples --json
 - Extract AST-aware comments without treating template, string, or regular-expression text as comments.
 - Report parser diagnostics while retaining recoverable index entries.
 - Report 1-based line/column locations with end-exclusive UTF-16 offsets.
+- Run configurable deterministic and heuristic static rules with evidence,
+  confidence, severity, stable fingerprints, and syntax gating.
+- Recognize evidence-backed SCFile construction and approved methods with direct
+  bindings, one-hop aliases, lexical shadowing, and reassignment invalidation.
+- Report supported unhandled SCFile return-code and query-loop progress patterns.
 - CLI text or JSON output.
 
 ## Not yet implemented
-- Rule Engine, code findings, SM-specific control flow, AI, VS Code extension, SM Connector.
+- CLI review/report rendering, batch JSON/HTML reports, AI, VS Code extension,
+  SM Connector, interprocedural SM analysis, and unverified custom SM APIs.
+- Mandatory SCFile `doClose()` analysis; no verified lifecycle contract has
+  been accepted for that method.
 - Validate against real SM ScriptLibrary samples before treating parser coverage as complete.
 
 ## Codex collaboration contract

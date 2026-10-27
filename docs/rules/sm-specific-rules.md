@@ -1,6 +1,6 @@
 # Sprint 3 SM-specific rule specifications
 
-- Status: Draft; requires SM semantic approval
+- Status: Phase B implemented; requires independent review and real-source UAT
 - Date: 2026-10-26
 
 These specifications intentionally separate verified product behavior from
@@ -19,18 +19,22 @@ Report only when all conditions hold:
 
 1. Receiver is directly known as an SCFile binding or supported one-hop alias.
 2. Method exists in the verified API catalog and `returnsCode` is true.
-3. Call result is an expression statement and is therefore ignored.
+3. Call result is an expression statement and therefore ignored, or is assigned
+   to a simple tracked variable with no supported observable consumption.
 
-Do not report when the result is assigned, returned, passed to another call, or
-used directly as a condition/comparison. Whether those uses are *adequate*
-handling is a separate future policy; Sprint 3 must not equate assignment with a
-successful check.
+Assignment alone is not handling. Do not report when the result is returned,
+passed to another call, used directly as a condition/comparison, or later read
+in an unsupported/ambiguous expression. Those cases are possible consumption,
+not proof that business handling is adequate. Branch-specific consumption is
+joined conservatively: any supported or ambiguous use suppresses a deterministic
+finding.
 
 Boundary cases:
 
 - `file.doSelect(query);` -> finding after catalog verification.
-- `rc = file.doSelect(query);` -> no ignored-result finding.
+- `rc = file.doSelect(query);` with no later use -> finding.
 - `if (file.doSelect(query) == RC_SUCCESS) {}` -> no finding.
+- `handle(file.doSelect(query));` -> no finding.
 - `unknown.doSelect(query);` -> no deterministic finding.
 - `wrapper.select(query);` -> no finding until wrapper semantics are verified.
 
@@ -45,14 +49,15 @@ Candidate loop requirements:
 
 1. Condition is tied to the return code produced by a verified SCFile
    `doSelect`/`getNext` call or directly calls a verified cursor method.
-2. The body contains no update of that condition variable from `getNext`, no
-   direct cursor movement accepted by the API catalog, and no syntactic loop
-   exit recognized by the shared control-flow helper.
+2. At least one continuing path in the supported statement/block/if subset does
+   not assign the same SCFile binding's `getNext()` result to the tracked return
+   code, and no syntactic loop exit is recognized by the shared helper.
 3. Binding identity remains known through the loop.
 
-Do not report general `while (flag)` loops, loops with unknown wrapper calls, or
-loops where aliases escape. The rule detects a proven canonical mistake, not all
-possible infinite loops.
+Do not report general `while (flag)` loops, loops with unknown condition origins,
+deep aliases, unknown return-code reassignment, nested loops, switch, or try
+inside the analyzed body. The rule proves a supported syntactic progress pattern
+is missing; it does not prove runtime non-termination.
 
 Positive fixture:
 
