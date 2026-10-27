@@ -57,7 +57,7 @@ flowchart TD
 |---|---|---|---|
 | 1 | 2 tuần | Core Foundation & Parser | Hoàn tất và đã merge |
 | 2 | 2 tuần | Static Rule Engine | Hoàn tất và đã merge |
-| 3 | 2 tuần | SM-Specific Rules & Reports | Phase B hoàn tất local, chờ independent review |
+| 3 | 2 tuần | SM-Specific Rules & Reports | Phase C hoàn tất local, chờ independent review và UAT |
 | 4 | 2 tuần | AI Review Engine | Chưa bắt đầu |
 | 5 | 2 tuần | VS Code Extension | Chưa bắt đầu |
 | 6 | 2 tuần | SM Connector & UAT | Chưa bắt đầu |
@@ -124,7 +124,7 @@ flowchart TD
 
 **Đầu ra:** **MVP** có thể review ScriptLibrary offline mà không cần AI hoặc kết nối trực tiếp SM.
 
-**Tiến độ:** Phase A architecture/evidence audit đã được review. Phase B đã hoàn tất local với evidence-backed SCFile catalog, event extraction, direct/one-hop symbol tracking, bounded intraprocedural flow, `SM-RC-001` và `SM-LOOP-002`. Phase C CLI/reporting chưa bắt đầu.
+**Tiến độ:** Phase A architecture/evidence audit đã được review. Phase B đã đạt trạng thái **Static Code Review Approved — Independent Verification and SM 9.8x UAT Pending**. Phase C đã hoàn tất local với single-file/batch review, text/JSON/HTML reports, configuration, filtering và deterministic exit codes; đang chờ independent review.
 
 **Tiêu chí hoàn thành:**
 - SM-specific rules dựa trên tài liệu hoặc source mẫu đã được xác minh, không suy đoán semantics.
@@ -229,9 +229,10 @@ flowchart TD
 | Sprint 2 foundation — PR #2 | Đã merge |
 | Sprint 2 control-flow/heuristics | Hoàn tất và đã merge |
 | Sprint 3 Phase A | Hoàn tất; `doClose` lifecycle đang bị chặn do thiếu evidence |
-| Sprint 3 Phase B | Hoàn tất local, chờ independent review |
+| Sprint 3 Phase B | Static Code Review Approved; chờ independent verification và SM 9.8x UAT |
+| Sprint 3 Phase C | Hoàn tất local và acceptance; chờ independent review |
 
-**Bước tiếp theo:** ChatGPT review độc lập Phase B, tập trung vào API evidence, alias/flow conservatism và false-positive policy của `SM-RC-001`/`SM-LOOP-002`. Project owner quyết định merge trước khi bắt đầu Phase C. Validation trên source SM đại diện vẫn bắt buộc trước khi tuyên bố coverage hoàn chỉnh.
+**Bước tiếp theo:** ChatGPT review độc lập Phase C CLI/reporting và project owner quyết định merge. Phase B vẫn chờ independent verification và semantic UAT trên source SM 9.8x đại diện; không được xem CLI acceptance là bằng chứng xác nhận SM semantics.
 
 ## 6. Định hướng lâu dài
 
