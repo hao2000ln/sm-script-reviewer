@@ -83,6 +83,31 @@ test('save settings and lifecycle prevent stale diagnostics from being applied',
   assert.equal(lifecycle.isCurrent(second, 2), false);
 });
 
+test('lifecycle invalidation cannot reuse a cleared URI generation', () => {
+  const lifecycle = new ReviewLifecycle();
+  const uri = 'file:///script.js';
+  const beforeClear = lifecycle.begin(uri, 1);
+
+  lifecycle.clear(uri);
+  const afterClear = lifecycle.begin(uri, 1);
+  assert.notEqual(afterClear.generation, beforeClear.generation);
+  assert.equal(lifecycle.isCurrent(beforeClear, 1), false);
+  assert.equal(lifecycle.isCurrent(afterClear, 1), true);
+});
+
+test('global lifecycle invalidation rejects tokens before clearAll', () => {
+  const lifecycle = new ReviewLifecycle();
+  const uri = 'file:///script.js';
+  const beforeClearAll = lifecycle.begin(uri, 1);
+
+  lifecycle.clearAll();
+  const afterClearAll = lifecycle.begin(uri, 1);
+  assert.equal(afterClearAll.generation, beforeClearAll.generation);
+  assert.notEqual(afterClearAll.epoch, beforeClearAll.epoch);
+  assert.equal(lifecycle.isCurrent(beforeClearAll, 1), false);
+  assert.equal(lifecycle.isCurrent(afterClearAll, 1), true);
+});
+
 test('reuses SM static rules in the extension adapter', () => {
   const reviewed = reviewInMemoryDocument({
     uri: 'file:///sm.js',
