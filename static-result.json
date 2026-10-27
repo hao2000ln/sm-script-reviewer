@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-10-27T08:04:10.029Z",
+  "toolVersion": "0.1.0",
+  "inputPath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js",
+  "failureThreshold": "warning",
+  "summary": {
+    "files": 1,
+    "findings": 3,
+    "diagnostics": 0,
+    "skippedRules": 2,
+    "ruleErrors": 0,
+    "failures": 0,
+    "skippedFiles": 0
+  },
+  "files": [
+    {
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js",
+      "sourceHash": "f9bd9bd276ead586b4d8a6b4f6644e134d9a387939635115d1abd07536383de4",
+      "findingCount": 3,
+      "diagnosticCount": 0,
+      "skippedRuleCount": 2,
+      "ruleErrorCount": 0
+    }
+  ],
+  "findings": [
+    {
+      "message": "Function \"loadContacts\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 4,
+          "column": 1,
+          "offset": 36
+        },
+        "end": {
+          "line": 13,
+          "column": 2,
+          "offset": 235
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 4,
+              "column": 1,
+              "offset": 36
+            },
+            "end": {
+              "line": 13,
+              "column": 2,
+              "offset": 235
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "7e42312a1ff4e3de3213bba882ab72a609f7afc093b79ed78b2e1629b956e61e",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js"
+    },
+    {
+      "message": "SCFile success loop has a continuing path that does not update \"rc\" from getNext().",
+      "range": {
+        "start": {
+          "line": 8,
+          "column": 5,
+          "offset": 146
+        },
+        "end": {
+          "line": 10,
+          "column": 6,
+          "offset": 214
+        }
+      },
+      "evidence": [
+        {
+          "kind": "control-flow",
+          "message": "The supported intraprocedural flow subset found no matching getNext() return-code update on at least one continuing path.",
+          "range": {
+            "start": {
+              "line": 8,
+              "column": 5,
+              "offset": 146
+            },
+            "end": {
+              "line": 10,
+              "column": 6,
+              "offset": 214
+            }
+          }
+        }
+      ],
+      "suggestion": "Update the tracked return code from getNext() on every continuing path, or add an explicit exit.",
+      "fingerprint": "f20fa9afb59e700eb49e30847ff9ce0040df4c6fac5098520d73a8d15b117510",
+      "ruleId": "SM-LOOP-002",
+      "sourceId": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js",
+      "severity": "error",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 9,
+          "column": 9,
+          "offset": 182
+        },
+        "end": {
+          "line": 9,
+          "column": 33,
+          "offset": 206
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 9,
+              "column": 9,
+              "offset": 182
+            },
+            "end": {
+              "line": 9,
+              "column": 33,
+              "offset": 206
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "6353a35cb5df0aad663ae9325d32de3f8993068c5acc17198edd15418722c617",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js"
+    }
+  ],
+  "diagnostics": [],
+  "skippedRules": [
+    {
+      "ruleId": "SM-CMT-002",
+      "reason": "disabled",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js"
+    },
+    {
+      "ruleId": "SM-CMT-003",
+      "reason": "disabled",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\uat\\sprint4\\tc02-sm-loop.js"
+    }
+  ],
+  "ruleErrors": [],
+  "failures": []
+}

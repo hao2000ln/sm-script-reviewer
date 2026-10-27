@@ -55,6 +55,62 @@ function outer() {
   ]);
 });
 
+test('SM-CMT-001 accepts the UAT loadContacts function with adjacent JSDoc', () => {
+  const result = review(`/**
+ * Read contact records.
+ */
+function loadContacts() {
+    var file = new SCFile("contacts");
+    var rc = file.doSelect('true');
+
+    while (rc == RC_SUCCESS) {
+        print(file.contact_name);
+    }
+
+    return rc;
+}`);
+
+  assert.deepEqual(
+    result.findings.filter(({ ruleId }) => ruleId === 'SM-CMT-001'),
+    [],
+  );
+  assert.ok(result.findings.some(({ ruleId }) => ruleId === 'SM-LOOP-002'));
+  assert.ok(result.findings.some(({ ruleId }) => ruleId === 'SM-DBG-001'));
+});
+
+test('SM-CMT-001 accepts an adjacent line comment', () => {
+  const result = review('// Read contact records.\nfunction loadContacts() {}');
+
+  assert.deepEqual(
+    result.findings.filter(({ ruleId }) => ruleId === 'SM-CMT-001'),
+    [],
+  );
+});
+
+test('SM-CMT-001 reports a function without a comment', () => {
+  const result = review('function loadContacts() {}');
+
+  assert.deepEqual(
+    result.findings
+      .filter(({ ruleId }) => ruleId === 'SM-CMT-001')
+      .map(({ message }) => message),
+    ['Function "loadContacts" has no leading comment.'],
+  );
+});
+
+test('SM-CMT-001 rejects a comment separated by unrelated code', () => {
+  const result = review(`/** Read contact records. */
+var unrelated = true;
+function loadContacts() {}`);
+
+  assert.deepEqual(
+    result.findings
+      .filter(({ ruleId }) => ruleId === 'SM-CMT-001')
+      .map(({ message }) => message),
+    ['Function "loadContacts" has no leading comment.'],
+  );
+});
+
 test('SM-DBG-001 reports only direct print calls', () => {
   const result = review(`
 print("debug");

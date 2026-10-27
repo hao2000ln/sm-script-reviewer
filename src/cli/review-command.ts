@@ -9,6 +9,10 @@ import { renderHtmlReport } from '../reporting/html';
 import { renderJsonReport } from '../reporting/json';
 import { createReviewReport, reportExitCode } from '../reporting/report';
 import { renderTextReview } from './text-review';
+import {
+  loadAIEnvironmentConfiguration,
+  type AIEnvironmentConfiguration,
+} from './environment';
 
 type ReviewFormat = 'text' | 'json' | 'html';
 
@@ -24,6 +28,7 @@ interface ReviewCommandOptions {
   readonly aiModel: string;
   readonly aiEndpoint: string;
   readonly aiTimeoutMs: number;
+  readonly aiApiKey: string;
 }
 
 const CLI_SEVERITIES = new Set<RuleSeverity>(['info', 'warning', 'error']);
@@ -58,7 +63,10 @@ export class CliInputError extends Error {
 }
 
 export async function runReviewCommand(target: string, args: readonly string[]): Promise<0 | 1 | 2> {
-  const options = parseReviewOptions(args);
+  const environment = args.includes('--ai')
+    ? await loadAIEnvironmentConfiguration()
+    : {};
+  const options = parseReviewOptions(args, environment);
   validateRuleFilters(options.ruleIds);
   const config = options.config ? await loadConfig(options.config) : {};
   const batch = await reviewTarget(target, {
@@ -82,7 +90,10 @@ export async function runReviewCommand(target: string, args: readonly string[]):
   return reportExitCode(report);
 }
 
-function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
+function parseReviewOptions(
+  args: readonly string[],
+  environment: AIEnvironmentConfiguration,
+): ReviewCommandOptions {
   let format: ReviewFormat = 'text';
   let output: string | undefined;
   let config: string | undefined;
@@ -91,9 +102,9 @@ function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
   const excludedPatterns: string[] = [];
   let ai = false;
   let allowSourceTransmission = false;
-  let aiModel = DEFAULT_AI_MODEL;
-  let aiEndpoint = DEFAULT_AI_ENDPOINT;
-  let aiTimeoutMs = DEFAULT_AI_TIMEOUT_MS;
+  let cliAIModel: string | undefined;
+  let cliAIEndpoint: string | undefined;
+  let cliAITimeoutMs: number | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const option = args[index];
@@ -135,23 +146,29 @@ function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
         break;
       case '--ai-model':
         if (!value.trim()) throw new CliInputError('AI model must not be empty');
-        aiModel = value;
+        cliAIModel = value;
         break;
       case '--ai-endpoint':
-        aiEndpoint = value;
+        cliAIEndpoint = value;
         break;
       case '--ai-timeout': {
         const parsed = Number(value);
         if (!Number.isSafeInteger(parsed) || parsed <= 0) {
           throw new CliInputError('AI timeout must be a positive integer');
         }
-        aiTimeoutMs = parsed;
+        cliAITimeoutMs = parsed;
         break;
       }
       default:
         throw new CliInputError(`Unknown option: ${option}`);
     }
   }
+
+  const aiModel = cliAIModel ?? environment.model ?? DEFAULT_AI_MODEL;
+  const aiEndpoint = cliAIEndpoint ?? environment.endpoint ?? DEFAULT_AI_ENDPOINT;
+  const aiTimeoutMs = cliAITimeoutMs ?? resolveEnvironmentTimeout(environment.timeoutMs, ai);
+  if (ai && !aiModel.trim()) throw new CliInputError('AI model must not be empty');
+  if (ai && !aiEndpoint.trim()) throw new CliInputError('AI endpoint must not be empty');
 
   return {
     format,
@@ -165,6 +182,7 @@ function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
     aiModel,
     aiEndpoint,
     aiTimeoutMs,
+    aiApiKey: environment.apiKey ?? '',
   };
 }
 
@@ -187,7 +205,7 @@ async function createAIResult(
   try {
     provider = new OpenAICompatibleProvider({
       endpoint: options.aiEndpoint,
-      apiKey: process.env.SM_REVIEWER_AI_API_KEY ?? '',
+      apiKey: options.aiApiKey,
     });
   } catch (error) {
     providerConfigurationError = errorMessage(error);
@@ -200,6 +218,15 @@ async function createAIResult(
     modelId: options.aiModel,
     timeoutMs: options.aiTimeoutMs,
   });
+}
+
+function resolveEnvironmentTimeout(value: string | undefined, aiEnabled: boolean): number {
+  if (value === undefined || !aiEnabled) return DEFAULT_AI_TIMEOUT_MS;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new CliInputError('SM_REVIEWER_AI_TIMEOUT_MS must be a positive integer');
+  }
+  return parsed;
 }
 
 function validateRuleFilters(ruleIds: readonly string[]): void {
