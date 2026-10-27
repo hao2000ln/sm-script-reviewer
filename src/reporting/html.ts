@@ -43,6 +43,7 @@ export function renderHtmlReport(report: ReviewReport): string {
   <div class="summary">
     <span>Files: ${report.summary.files}</span><span>Findings: ${report.summary.findings}</span>
     <span>Diagnostics: ${report.summary.diagnostics}</span><span>Failures: ${report.summary.failures}</span>
+    <span>Skipped files: ${report.summary.skippedFiles}</span>
     <span>Threshold: ${escapeHtml(report.failureThreshold)}</span>
   </div>
   <div class="filters">

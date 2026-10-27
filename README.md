@@ -52,13 +52,16 @@ Supported options:
 - `--min-severity info|warning|error` (default: `warning`)
 - repeatable `--rule <rule-id>` report filter
 - repeatable `--exclude <glob>` discovery filter
+- `--help`
 
 All configured rules execute before report filters are applied. The minimum
 severity is both the display and failure threshold. Exit code `0` means no
 reported finding meets that threshold, `1` means at least one does, and `2`
 means invalid input/configuration or an operational file, rule, or report error.
-Parser diagnostics remain report data and do not independently change the exit
-code.
+Syntax errors that prevent valid-only rules from running remain present in JSON
+diagnostics and `skippedRules`, and produce exit code `2`. An explicitly supplied
+file must use `.js` or `.txt`; unsupported files produce exit code `2`, while an
+empty directory is a successful empty review.
 
 The JSON contract is documented in
 [`docs/reporting-schema-v1.md`](docs/reporting-schema-v1.md).

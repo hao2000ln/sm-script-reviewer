@@ -30,9 +30,13 @@ test('JSON report is versioned, filtered, deterministic, and preserves fingerpri
     const direct = review(await loadSource(sourcePath));
 
     assert.equal(report.schemaVersion, '1.0.0');
+    assert.equal(report.toolVersion, '0.1.0');
+    assert.equal(report.inputPath, resolve(root));
+    assert.ok(Number.isFinite(Date.parse(report.generatedAt)));
     assert.equal(report.failureThreshold, 'warning');
     assert.equal(report.summary.files, 1);
     assert.equal(report.summary.findings, 1);
+    assert.equal(report.summary.skippedFiles, 1);
     assert.equal(report.findings[0].ruleId, 'SM-DBG-001');
     assert.equal(
       report.findings[0].fingerprint,
@@ -118,13 +122,14 @@ test('invalid options, configuration, and targets return exit code 2 with clean 
   }
 });
 
-test('syntax-invalid source reports diagnostics and skipped rules without crashing', async () => {
+test('syntax-invalid source returns 2 with machine-readable diagnostics and skipped rules', async () => {
   const root = await mkdtemp(join(tmpdir(), 'sm-report-syntax-'));
   const sourcePath = join(root, 'broken.js');
   try {
     await writeFile(sourcePath, 'function broken( {', 'utf8');
     const result = runReview(sourcePath, '--format', 'json');
-    assert.equal(result.status, 0);
+    assert.equal(result.status, 2);
+    assert.equal(result.stderr, '');
     const report = JSON.parse(result.stdout) as ReviewReport;
     assert.ok(report.summary.diagnostics > 0);
     assert.ok(report.skippedRules.some(({ reason }) => reason === 'syntax-errors'));
@@ -163,9 +168,51 @@ test('operational file failures deterministically produce exit code 2', () => {
   const report = createReviewReport({
     files: [],
     failures: [{ filePath: 'unreadable.js', message: 'access denied' }],
+    skippedFileCount: 0,
   });
   assert.equal(reportExitCode(report), 2);
   assert.deepEqual(report.failures, [{ filePath: 'unreadable.js', message: 'access denied' }]);
+});
+
+test('explicit unsupported files fail while empty directories remain clean', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'sm-report-input-'));
+  const jsonPath = join(root, 'source.json');
+  const markdownPath = join(root, 'source.md');
+  const empty = join(root, 'empty');
+  try {
+    await mkdir(empty);
+    await Promise.all([
+      writeFile(jsonPath, '{}', 'utf8'),
+      writeFile(markdownPath, '# text', 'utf8'),
+    ]);
+    for (const path of [jsonPath, markdownPath]) {
+      const result = runReview(path, '--format', 'json');
+      assert.equal(result.status, 2);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Unsupported source file extension/u);
+    }
+
+    const result = runReview(empty, '--format', 'json');
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, '');
+    const report = JSON.parse(result.stdout) as ReviewReport;
+    assert.equal(report.summary.files, 0);
+    assert.equal(report.summary.skippedFiles, 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('review --help prints valid usage and exits successfully', () => {
+  const result = spawnSync(process.execPath, [cliPath, 'review', '--help'], {
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.match(result.stdout, /Usage: sm-review review <file-or-directory>/u);
+  assert.match(result.stdout, /--format text\|json\|html/u);
+  assert.match(result.stdout, /--min-severity info\|warning\|error/u);
 });
 
 function runReview(target: string, ...args: string[]) {

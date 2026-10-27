@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { discoverSources, loadSource } from '../src/source/loader';
+import { discoverSourceFiles, discoverSources, loadSource } from '../src/source/loader';
 
 test('loads UTF-8 source and computes its SHA-256 hash', async () => {
   const filePath = resolve(__dirname, '../../examples/sample.js');
@@ -56,6 +56,10 @@ test('discovers JavaScript recursively and excludes generated or hidden folders'
       join(root, 'review.txt'),
       join(root, 'root.js'),
     ].sort());
+    assert.equal((await discoverSourceFiles(root)).skippedFileCount, 2);
+    assert.equal((await discoverSourceFiles(root, {
+      extensions: ['js', '.txt'],
+    })).skippedFileCount, 1);
     assert.deepEqual(await discoverSources(join(root, 'nested', 'ignored.md')), []);
     if (symlinkCreated) {
       assert.deepEqual(await discoverSources(join(root, 'linked.js'), {

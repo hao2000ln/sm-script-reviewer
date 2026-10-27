@@ -22,6 +22,19 @@ interface ReviewCommandOptions {
 const CLI_SEVERITIES = new Set<RuleSeverity>(['info', 'warning', 'error']);
 const FORMATS = new Set<ReviewFormat>(['text', 'json', 'html']);
 
+export const REVIEW_USAGE = `Usage: sm-review review <file-or-directory> [options]
+
+Options:
+  --format text|json|html           Report format (default: text)
+  --output <path>                   Write the report to a file
+  --config <path>                   Load JSON rule configuration
+  --min-severity info|warning|error Display and failure threshold (default: warning)
+  --rule <rule-id>                  Include a rule in the report (repeatable)
+  --exclude <glob>                  Exclude matching files (repeatable)
+  --help                            Show this help
+
+Exit codes: 0 clean, 1 findings at threshold, 2 invalid/incomplete review.`;
+
 export class CliInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -40,6 +53,7 @@ export async function runReviewCommand(target: string, args: readonly string[]):
   const report = createReviewReport(batch, {
     minSeverity: options.minSeverity,
     ruleIds: options.ruleIds.length > 0 ? options.ruleIds : undefined,
+    inputPath: resolve(target),
   });
   const rendered = renderReport(report, options.format);
 

@@ -9,8 +9,11 @@
 | Field | Meaning |
 |---|---|
 | `schemaVersion` | Report contract version. |
+| `generatedAt` | UTC ISO-8601 report generation timestamp. |
+| `toolVersion` | Reviewer package version. |
+| `inputPath` | Resolved file or directory supplied to the review command. |
 | `failureThreshold` | Minimum reported severity and exit-code threshold. |
-| `summary` | Counts for files, findings, diagnostics, skipped rules, rule errors, and file failures. |
+| `summary` | Counts for files, findings, diagnostics, skipped rules, rule errors, file failures, and known skipped files. |
 | `files` | Stable path-ordered file summaries and source hashes. |
 | `findings` | Filtered findings with `filePath` plus the unchanged public `Finding` fields. |
 | `diagnostics` | Parser diagnostics with file paths and public source locations. |
@@ -34,9 +37,16 @@ the configuration supplied through `--config`.
 
 | Code | Meaning |
 |---:|---|
-| `0` | Review completed with no reported finding meeting the threshold. |
+| `0` | Review completed with no reported finding meeting the threshold and no blocking syntax/operational error. |
 | `1` | One or more reported findings meet the threshold. |
-| `2` | Invalid CLI input/configuration, output failure, file failure, or isolated rule failure. |
+| `2` | Invalid CLI input/configuration, blocking syntax diagnostics, output failure, file failure, or isolated rule failure. |
 
-Parser diagnostics are included in the report but do not independently produce
-exit code `1` or `2`. Syntax-gated rules appear in `skippedRules`.
+Parser diagnostics and syntax-gated rules remain serialized even when blocked
+valid-only analysis produces exit code `2`. Explicit unsupported source files
+are rejected before report generation; empty directories produce an empty report
+with exit code `0`.
+
+`summary.skippedFiles` counts known regular files skipped because their extension
+is unsupported, they are hidden, or they match an explicit exclusion. It does
+not recursively count files inside excluded directories or resolve ignored
+symlinks, because doing so would violate the discovery boundary.

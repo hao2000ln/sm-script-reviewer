@@ -11,6 +11,11 @@ export interface SourceDiscoveryOptions {
   readonly ignoreSymlinks?: boolean;
 }
 
+export interface SourceDiscoveryResult {
+  readonly paths: readonly string[];
+  readonly skippedFileCount: number;
+}
+
 const DEFAULT_EXTENSIONS = ['.js'] as const;
 const DEFAULT_EXCLUDED_DIRECTORIES = ['.git', 'node_modules', 'dist'] as const;
 
@@ -24,6 +29,13 @@ export async function discoverSources(
   path: string,
   options: SourceDiscoveryOptions = {},
 ): Promise<string[]> {
+  return [...(await discoverSourceFiles(path, options)).paths];
+}
+
+export async function discoverSourceFiles(
+  path: string,
+  options: SourceDiscoveryOptions = {},
+): Promise<SourceDiscoveryResult> {
   const absolute = resolve(path);
   const extensions = new Set(
     (options.extensions ?? DEFAULT_EXTENSIONS).map(normalizeExtension),
@@ -32,7 +44,7 @@ export async function discoverSources(
     (options.excludedDirectoryNames ?? DEFAULT_EXCLUDED_DIRECTORIES)
       .map((name) => name.toLowerCase()),
   );
-  const output = await discover(
+  const result = await discover(
     absolute,
     absolute,
     extensions,
@@ -40,7 +52,15 @@ export async function discoverSources(
     options.excludedPatterns ?? [],
     options.ignoreSymlinks === true,
   );
-  return output.sort(compareNormalizedPaths);
+  return {
+    paths: result.paths.sort(compareNormalizedPaths),
+    skippedFileCount: result.skippedFileCount,
+  };
+}
+
+interface MutableDiscoveryResult {
+  paths: string[];
+  skippedFileCount: number;
 }
 
 async function discover(
@@ -50,35 +70,49 @@ async function discover(
   excludedDirectories: ReadonlySet<string>,
   excludedPatterns: readonly string[],
   ignoreSymlinks: boolean,
-): Promise<string[]> {
+): Promise<MutableDiscoveryResult> {
   const relativePath = normalizedPath(relative(root, absolute));
   if (relativePath && excludedPatterns.some((pattern) => matchesGlob(relativePath, pattern))) {
-    return [];
+    return { paths: [], skippedFileCount: 0 };
   }
   const entry = await lstat(absolute);
-  if (entry.isSymbolicLink() && ignoreSymlinks) return [];
+  if (entry.isSymbolicLink() && ignoreSymlinks) return { paths: [], skippedFileCount: 0 };
   const target = entry.isSymbolicLink() ? await stat(absolute) : entry;
-  if (target.isFile()) return extensions.has(extname(absolute).toLowerCase()) ? [absolute] : [];
-  if (!target.isDirectory()) return [];
+  if (target.isFile()) {
+    return extensions.has(extname(absolute).toLowerCase())
+      ? { paths: [absolute], skippedFileCount: 0 }
+      : { paths: [], skippedFileCount: 1 };
+  }
+  if (!target.isDirectory()) return { paths: [], skippedFileCount: 0 };
 
-  const output: string[] = [];
+  const output: MutableDiscoveryResult = { paths: [], skippedFileCount: 0 };
   for (const entry of await readdir(absolute, { withFileTypes: true })) {
     if (entry.isSymbolicLink()) continue;
-    if (entry.name.startsWith('.') || excludedDirectories.has(entry.name.toLowerCase())) continue;
+    if (entry.name.startsWith('.') || excludedDirectories.has(entry.name.toLowerCase())) {
+      if (entry.isFile()) output.skippedFileCount += 1;
+      continue;
+    }
     const next = join(absolute, entry.name);
     const nextRelativePath = normalizedPath(relative(root, next));
-    if (excludedPatterns.some((pattern) => matchesGlob(nextRelativePath, pattern))) continue;
+    if (excludedPatterns.some((pattern) => matchesGlob(nextRelativePath, pattern))) {
+      if (entry.isFile()) output.skippedFileCount += 1;
+      continue;
+    }
     if (entry.isDirectory()) {
-      output.push(...await discover(
+      const nested = await discover(
         root,
         next,
         extensions,
         excludedDirectories,
         excludedPatterns,
         ignoreSymlinks,
-      ));
+      );
+      output.paths.push(...nested.paths);
+      output.skippedFileCount += nested.skippedFileCount;
     } else if (entry.isFile() && extensions.has(extname(entry.name).toLowerCase())) {
-      output.push(next);
+      output.paths.push(next);
+    } else if (entry.isFile()) {
+      output.skippedFileCount += 1;
     }
   }
   return output;

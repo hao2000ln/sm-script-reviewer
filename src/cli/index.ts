@@ -1,9 +1,13 @@
 import { discoverSources, loadSource } from '../source/loader';
 import { analyze } from '../parser/analyze';
-import { runReviewCommand } from './review-command';
+import { REVIEW_USAGE, runReviewCommand } from './review-command';
 
 async function main() {
   const [command, target, ...args] = process.argv.slice(2);
+  if (command === 'review' && (target === '--help' || target === '-h')) {
+    console.log(REVIEW_USAGE);
+    return;
+  }
   if (command === 'review' && target) {
     try {
       process.exitCode = await runReviewCommand(target, args);

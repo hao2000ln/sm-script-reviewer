@@ -124,7 +124,7 @@ flowchart TD
 
 **Đầu ra:** **MVP** có thể review ScriptLibrary offline mà không cần AI hoặc kết nối trực tiếp SM.
 
-**Tiến độ:** Phase A architecture/evidence audit đã được review. Phase B đã đạt trạng thái **Static Code Review Approved — Independent Tests and SM 9.8x UAT Pending**. Phase C đã hoàn tất local với single-file/batch review, text/JSON/HTML reports, configuration, filtering và deterministic exit codes; đang chờ independent review.
+**Tiến độ:** Phase A architecture/evidence audit đã được review. Phase B đã đạt trạng thái **Static Code Review Approved — Independent Verification and SM 9.8x UAT Pending**. Phase C đã hoàn tất local với single-file/batch review, text/JSON/HTML reports, configuration, filtering và deterministic exit codes; đang chờ independent review.
 
 **Tiêu chí hoàn thành:**
 - SM-specific rules dựa trên tài liệu hoặc source mẫu đã được xác minh, không suy đoán semantics.
@@ -229,10 +229,10 @@ flowchart TD
 | Sprint 2 foundation — PR #2 | Đã merge |
 | Sprint 2 control-flow/heuristics | Hoàn tất và đã merge |
 | Sprint 3 Phase A | Hoàn tất; `doClose` lifecycle đang bị chặn do thiếu evidence |
-| Sprint 3 Phase B | Static Code Review Approved; chờ independent tests và SM 9.8x UAT |
+| Sprint 3 Phase B | Static Code Review Approved; chờ independent verification và SM 9.8x UAT |
 | Sprint 3 Phase C | Hoàn tất local và acceptance; chờ independent review |
 
-**Bước tiếp theo:** ChatGPT review độc lập Phase C CLI/reporting và project owner quyết định merge. Phase B vẫn chờ independent tests và semantic UAT trên source SM 9.8x đại diện; không được xem CLI acceptance là bằng chứng xác nhận SM semantics.
+**Bước tiếp theo:** ChatGPT review độc lập Phase C CLI/reporting và project owner quyết định merge. Phase B vẫn chờ independent verification và semantic UAT trên source SM 9.8x đại diện; không được xem CLI acceptance là bằng chứng xác nhận SM semantics.
 
 ## 6. Định hướng lâu dài
 

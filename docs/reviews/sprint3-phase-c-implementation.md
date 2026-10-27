@@ -21,7 +21,11 @@ Delivered capabilities:
 - JSON rule configuration, severity/rule report filters, and output files;
 - HTML escaping, finding grouping, evidence, suggestions, and local filters;
 - deterministic exit codes: 0 clean at threshold, 1 findings at threshold, and
-  2 invalid input/configuration or operational file/rule/report failure.
+  2 unsupported/invalid input, blocking syntax diagnostics, invalid
+  configuration, or operational file/rule/report failure;
+- report metadata for generation time, tool version, resolved input path, and
+  known skipped-file counts;
+- `review --help` usage that exits successfully without reading a target.
 
 `--min-severity` is both the display and failure threshold and defaults to
 `warning`. `--rule` and severity filters are applied after all configured rules
@@ -35,7 +39,7 @@ Executed on 2026-10-27:
 |---|---|
 | `npm ci` | Pass; 3 packages installed, 0 vulnerabilities |
 | `npm run build` | Pass |
-| `npm test` | Pass; 95/95 tests |
+| `npm test` | Pass; 97/97 tests |
 | `node sprint2-acceptance.cjs` | Pass; 17/17 cases |
 
 End-to-end coverage includes single files, recursive directories, text/JSON/HTML,
@@ -47,14 +51,15 @@ failures, `inspect` regression, and report integration for `SM-RC-001` and
 
 - **Phase C implementation verification:** complete locally with the results
   above; independent review is pending.
-- **Phase B static code review:** approved.
-- **Phase B semantic validation:** independent tests and representative SM 9.8x
+- **Phase B status:** Static Code Review Approved — Independent Verification and
+  SM 9.8x UAT Pending.
+- **Phase B semantic validation:** independent verification and representative SM 9.8x
   UAT remain pending. CLI/report tests do not validate SM runtime semantics.
 
 ## Known limitations
 
-- Parser diagnostics are reported and syntax-gated rules are listed, but
-  diagnostics alone do not change the process exit code.
+- Parser diagnostics and syntax-gated rules are reported; blocking syntax
+  diagnostics produce exit code 2 even when JSON output is emitted successfully.
 - HTML filtering operates on findings already selected by CLI report filters.
 - Glob support intentionally covers `*`, `**`, and `?`; negated patterns and
   brace/extglob syntax are not supported.

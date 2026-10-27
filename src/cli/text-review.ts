@@ -34,7 +34,7 @@ export function renderTextReview(report: ReviewReport): string {
   lines.push(
     `Summary: files=${report.summary.files} findings=${report.summary.findings} `
     + `diagnostics=${report.summary.diagnostics} skippedRules=${report.summary.skippedRules} `
-    + `failures=${report.summary.failures}`,
+    + `skippedFiles=${report.summary.skippedFiles} failures=${report.summary.failures}`,
   );
   return lines.join('\n');
 }
