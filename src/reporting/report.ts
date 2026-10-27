@@ -1,5 +1,6 @@
 import type { ParseIssue } from '../core/types';
 import { TOOL_VERSION } from '../core/version';
+import type { AIReviewError, AIReviewRunResult, ReportAIFinding } from '../ai/orchestrator';
 import type { BatchReviewResult, ReviewFailure } from '../reviewer/batch';
 import type {
   Finding,
@@ -15,6 +16,7 @@ export interface ReviewReportOptions {
   readonly ruleIds?: readonly string[];
   readonly generatedAt?: string;
   readonly inputPath?: string;
+  readonly ai?: AIReviewRunResult;
 }
 
 export interface ReportFinding extends Finding {
@@ -56,6 +58,8 @@ export interface ReviewReport {
     readonly ruleErrors: number;
     readonly failures: number;
     readonly skippedFiles: number;
+    readonly aiFindings?: number;
+    readonly aiErrors?: number;
   };
   readonly files: readonly ReportFile[];
   readonly findings: readonly ReportFinding[];
@@ -63,6 +67,8 @@ export interface ReviewReport {
   readonly skippedRules: readonly ReportSkippedRule[];
   readonly ruleErrors: readonly ReportRuleError[];
   readonly failures: readonly ReviewFailure[];
+  readonly aiFindings?: readonly ReportAIFinding[];
+  readonly aiErrors?: readonly AIReviewError[];
 }
 
 const SEVERITY_RANK: Readonly<Record<RuleSeverity, number>> = {
@@ -83,6 +89,9 @@ export function createReviewReport(
   const skippedRules: ReportSkippedRule[] = [];
   const ruleErrors: ReportRuleError[] = [];
   const files: ReportFile[] = [];
+  const aiFindings = options.ai?.findings.filter((finding) => (
+    SEVERITY_RANK[finding.severity] >= SEVERITY_RANK[failureThreshold]
+  ));
 
   for (const file of batch.files) {
     const visibleFindings = file.result.findings.filter((finding) => (
@@ -126,6 +135,10 @@ export function createReviewReport(
       ruleErrors: ruleErrors.length,
       failures: batch.failures.length,
       skippedFiles: batch.skippedFileCount,
+      ...(options.ai ? {
+        aiFindings: aiFindings?.length ?? 0,
+        aiErrors: options.ai.errors.length,
+      } : {}),
     },
     files,
     findings,
@@ -133,16 +146,20 @@ export function createReviewReport(
     skippedRules,
     ruleErrors,
     failures: [...batch.failures],
+    ...(options.ai ? {
+      aiFindings: aiFindings ?? [],
+      aiErrors: [...options.ai.errors],
+    } : {}),
   };
 }
 
 export function reportExitCode(report: ReviewReport): 0 | 1 | 2 {
-  if (report.failures.length > 0 || report.ruleErrors.length > 0) return 2;
+  if (report.failures.length > 0 || report.ruleErrors.length > 0 || (report.aiErrors?.length ?? 0) > 0) return 2;
   if (
     report.diagnostics.length > 0
     && report.skippedRules.some(({ reason }) => reason === 'syntax-errors')
   ) {
     return 2;
   }
-  return report.findings.length > 0 ? 1 : 0;
+  return report.findings.length > 0 || (report.aiFindings?.length ?? 0) > 0 ? 1 : 0;
 }

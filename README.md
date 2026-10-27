@@ -32,9 +32,11 @@ npm run review -- review ./examples --format html --output review.html
   HTML reports, configuration, filters, stable ordering, and deterministic exit codes.
 - Build provider-independent, function-level AI context offline with explicit
   budgets, source grounding, response validation, and privacy-safe defaults.
+- Optionally run an explicitly consented OpenAI-compatible AI review and keep
+  validated model-generated findings separate from static findings.
 
 ## Not yet implemented
-- Live AI providers and AI CLI/report integration, VS Code extension, SM
+- RAG/knowledge base, multiple AI provider adapters, VS Code extension, SM
   Connector, interprocedural SM analysis, and unverified custom SM APIs.
 - Mandatory SCFile `doClose()` analysis; no verified lifecycle contract has
   been accepted for that method.
@@ -68,14 +70,42 @@ empty directory is a successful empty review.
 The JSON contract is documented in
 [`docs/reporting-schema-v1.md`](docs/reporting-schema-v1.md).
 
-## AI foundation status
+## Optional AI review
 
-AI is disabled by default. Sprint 4 Phase A contains only offline contracts,
-context selection, approximate token budgeting, validation, redaction hooks, and
-a fake provider for tests. It makes no network requests, requires no API key,
-does not expose AI CLI options, and never treats source comments as instructions.
-The architecture and live-provider prerequisites are documented in
+AI remains disabled unless `--ai` is supplied. Remote transmission additionally
+requires `--allow-source-transmission`; this sends selected source, source/path
+metadata, parser context, and static evidence to the configured provider. Review
+the provider's privacy and retention policy before granting consent. Credentials
+are read only from `SM_REVIEWER_AI_API_KEY` and are not included in reports.
+
+PowerShell setup and example:
+
+```powershell
+$env:SM_REVIEWER_AI_API_KEY = '<api-key>'
+npm run review -- review ./samples/example.js --ai --allow-source-transmission `
+  --ai-model gpt-4o-mini `
+  --ai-endpoint https://api.openai.com/v1/chat/completions `
+  --ai-timeout 30000 --format json
+```
+
+The live adapter supports one OpenAI-compatible chat-completions endpoint.
+Remote endpoints must use HTTPS; plain HTTP is accepted only for localhost test
+servers. Requests use approximate budgets, a timeout, response validation, and
+a hard response-byte limit. AI errors produce exit code `2` while retaining the
+static report. AI findings are model-generated suggestions, are not deterministic
+static findings, and require human review. The MVP analyzes one selected context
+per file and does not provide RAG, deduplication, provider-specific token counts,
+or interprocedural reasoning.
+
+The architecture is documented in
 [`docs/decisions/0004-ai-review-architecture.md`](docs/decisions/0004-ai-review-architecture.md).
+
+Sprint 3 Phase B status remains: **Static Code Review Approved — Independent
+Verification & SM 9.8x UAT Pending.**
+
+Latest local MVP verification (2026-10-27): `npm run build` passed, `npm test`
+passed 127/127 tests, and `node sprint2-acceptance.cjs` passed 17/17 cases. The
+HTTP tests use localhost mocks and make no paid provider calls.
 
 ## Codex collaboration contract
 1. Work on a separate feature branch created by the project owner; never change production SM.

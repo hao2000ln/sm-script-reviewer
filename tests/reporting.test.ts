@@ -7,6 +7,8 @@ import { test } from 'node:test';
 import { review } from '../src/reviewer/review';
 import { loadSource } from '../src/source/loader';
 import { createReviewReport, reportExitCode, type ReviewReport } from '../src/reporting/report';
+import { renderTextReview } from '../src/cli/text-review';
+import { renderHtmlReport } from '../src/reporting/html';
 
 const cliPath = resolve(__dirname, '../src/cli/index.js');
 
@@ -172,6 +174,56 @@ test('operational file failures deterministically produce exit code 2', () => {
   });
   assert.equal(reportExitCode(report), 2);
   assert.deepEqual(report.failures, [{ filePath: 'unreadable.js', message: 'access denied' }]);
+});
+
+test('text and HTML reports label and escape model-generated findings separately', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'sm-report-ai-'));
+  const sourcePath = join(root, 'source.js');
+  try {
+    await writeFile(sourcePath, 'print("debug");', 'utf8');
+    const result = review(await loadSource(sourcePath));
+    const range = {
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 6, offset: 5 },
+    };
+    const report = createReviewReport({
+      files: [{ filePath: sourcePath, result }],
+      failures: [],
+      skippedFileCount: 0,
+    }, {
+      ai: {
+        enabled: true,
+        errors: [],
+        findings: [{
+          id: 'ai:test',
+          filePath: sourcePath,
+          sourceId: result.analysis.source.id,
+          sourceHash: result.analysis.source.hash,
+          range,
+          category: 'logic',
+          severity: 'warning',
+          message: '<model observation>',
+          explanation: '<untrusted explanation>',
+          suggestion: 'Review manually.',
+          evidenceReferences: ['source:target'],
+          confidence: 0.5,
+          assertionKind: 'model-inference',
+          model: { providerId: 'test', modelId: 'test-model' },
+          validationStatus: 'validated',
+        }],
+      },
+    });
+    const text = renderTextReview(report);
+    const html = renderHtmlReport(report);
+    assert.match(text, /AI-WARNING \[MODEL-GENERATED\]/u);
+    assert.match(html, /AI review \(model-generated\)/u);
+    assert.match(html, /&lt;model observation&gt;/u);
+    assert.doesNotMatch(html, /<model observation>/u);
+    assert.equal(report.findings.some(({ ruleId }) => ruleId.startsWith('AI')), false);
+    assert.equal(report.aiFindings?.length, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test('explicit unsupported files fail while empty directories remain clean', async () => {
