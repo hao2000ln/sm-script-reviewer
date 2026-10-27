@@ -3,3 +3,5 @@ node_modules/
 .env
 .env.*
 !.env.example
+ai-result.json
+static-result.json

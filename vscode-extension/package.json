@@ -1,0 +1,48 @@
+{
+  "name": "sm-scriptlibrary-reviewer",
+  "displayName": "SM ScriptLibrary Reviewer",
+  "description": "Read-only static review for OpenText/HPE Service Manager ScriptLibrary source.",
+  "version": "0.1.0",
+  "publisher": "hao2000ln",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": ["Linters"],
+  "activationEvents": ["onCommand:smReviewer.reviewCurrentFile", "onStartupFinished"],
+  "main": "./dist/vscode-extension/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "smReviewer.reviewCurrentFile",
+        "title": "SM Reviewer: Review Current File"
+      }
+    ],
+    "configuration": {
+      "title": "SM Reviewer",
+      "properties": {
+        "smReviewer.enableOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Review supported ScriptLibrary documents when they are saved."
+        },
+        "smReviewer.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show SM Reviewer diagnostics in the editor."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/vscode-extension/tests/*.test.js",
+    "package": "npx @vscode/vsce package"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.95.0"
+  }
+}
