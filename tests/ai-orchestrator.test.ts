@@ -89,6 +89,28 @@ function third() {}`);
   }]);
 });
 
+test('one oversized function is partial when its selected target is truncated', async () => {
+  const oversizedBody = `var value = "${'x'.repeat(13_000)}";`;
+  const batch = createBatch(`function oversized() { ${oversizedBody} }`);
+  const provider = new ContextResponseProvider();
+  const result = await runAIReview(batch, {
+    enabled: true,
+    allowSourceTransmission: true,
+    provider,
+    modelId: 'test-model',
+    timeoutMs: 100,
+  });
+
+  assert.equal(provider.calls, 1);
+  assert.deepEqual(result.coverage, [{
+    filePath: 'test.js',
+    totalIndexedFunctions: 1,
+    selectedForAIReview: 1,
+    notReviewedFunctions: 1,
+    status: 'partial',
+  }]);
+});
+
 class ContextResponseProvider implements AIProvider {
   readonly id = 'context-test';
   calls = 0;

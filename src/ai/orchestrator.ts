@@ -100,6 +100,13 @@ export async function runAIReview(
       continue;
     }
     const selectedForAIReview = contextResult.context.target.kind === 'function' ? 1 : 0;
+    const selectedTargetFullyIncluded = contextResult.context.target.kind !== 'function'
+      || (
+        contextResult.context.snippet.range.start.offset
+          <= contextResult.context.target.range.start.offset
+        && contextResult.context.snippet.range.end.offset
+          >= contextResult.context.target.range.end.offset
+      );
 
     try {
       const response = await requestAIReview(options.provider, {
@@ -134,7 +141,12 @@ export async function runAIReview(
         file.filePath,
         totalIndexedFunctions,
         selectedForAIReview,
-        totalIndexedFunctions > selectedForAIReview ? 'partial' : 'complete',
+        totalIndexedFunctions > selectedForAIReview || !selectedTargetFullyIncluded
+          ? 'partial'
+          : 'complete',
+        selectedTargetFullyIncluded
+          ? Math.max(0, totalIndexedFunctions - selectedForAIReview)
+          : totalIndexedFunctions,
       ));
     } catch (error) {
       const structured = error instanceof AIProviderError
@@ -180,14 +192,15 @@ function coverageEntry(
   totalIndexedFunctions: number,
   selectedForAIReview: number,
   status: AICoverageStatus,
+  notReviewedFunctions = status === 'failed'
+    ? totalIndexedFunctions
+    : Math.max(0, totalIndexedFunctions - selectedForAIReview),
 ): AIReviewCoverage {
   return {
     filePath,
     totalIndexedFunctions,
     selectedForAIReview,
-    notReviewedFunctions: status === 'failed'
-      ? totalIndexedFunctions
-      : Math.max(0, totalIndexedFunctions - selectedForAIReview),
+    notReviewedFunctions,
     status,
   };
 }
