@@ -9,6 +9,7 @@ export function renderTextReview(report: ReviewReport): string {
     const ruleErrors = report.ruleErrors.filter(({ filePath }) => filePath === file.filePath);
     const aiFindings = report.aiFindings?.filter(({ filePath }) => filePath === file.filePath) ?? [];
     const aiErrors = report.aiErrors?.filter(({ filePath }) => filePath === file.filePath) ?? [];
+    const aiCoverage = report.aiCoverage?.find(({ filePath }) => filePath === file.filePath);
 
     for (const finding of findings) {
       lines.push(
@@ -35,8 +36,18 @@ export function renderTextReview(report: ReviewReport): string {
     for (const error of aiErrors) {
       lines.push(`  AI-ERROR ${error.category} ${error.message}`);
     }
+    if (aiCoverage) {
+      lines.push(
+        `  AI-COVERAGE ${aiCoverage.status} selected=${aiCoverage.selectedForAIReview}`
+        + ` total=${aiCoverage.totalIndexedFunctions}`
+        + ` notReviewed=${aiCoverage.notReviewedFunctions}`,
+      );
+      if (aiCoverage.status === 'partial') {
+        lines.push('  AI-WARNING Partial review: this ScriptLibrary was not fully AI-reviewed.');
+      }
+    }
     if (findings.length === 0 && diagnostics.length === 0 && ruleErrors.length === 0
-      && aiFindings.length === 0 && aiErrors.length === 0) {
+      && aiFindings.length === 0 && aiErrors.length === 0 && !aiCoverage) {
       lines.push('  No findings.');
     }
   }

@@ -94,7 +94,8 @@ servers. Requests use approximate budgets, a timeout, response validation, and
 a hard response-byte limit. AI errors produce exit code `2` while retaining the
 static report. AI findings are model-generated suggestions, are not deterministic
 static findings, and require human review. The MVP analyzes one selected context
-per file and does not provide RAG, deduplication, provider-specific token counts,
+per file; JSON, text, and HTML reports explicitly show complete, partial, failed,
+or not-run function coverage. It does not provide RAG, deduplication, provider-specific token counts,
 or interprocedural reasoning.
 
 The architecture is documented in

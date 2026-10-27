@@ -20,10 +20,21 @@ export interface AIReviewError {
   readonly message: string;
 }
 
+export type AICoverageStatus = 'complete' | 'partial' | 'failed' | 'not-run';
+
+export interface AIReviewCoverage {
+  readonly filePath: string;
+  readonly totalIndexedFunctions: number;
+  readonly selectedForAIReview: number;
+  readonly notReviewedFunctions: number;
+  readonly status: AICoverageStatus;
+}
+
 export interface AIReviewRunResult {
   readonly enabled: boolean;
   readonly findings: readonly ReportAIFinding[];
   readonly errors: readonly AIReviewError[];
+  readonly coverage: readonly AIReviewCoverage[];
 }
 
 export interface AIReviewRunOptions {
@@ -55,12 +66,15 @@ export async function runAIReview(
   batch: BatchReviewResult,
   options: AIReviewRunOptions,
 ): Promise<AIReviewRunResult> {
-  if (!options.enabled) return { enabled: false, findings: [], errors: [] };
+  if (!options.enabled) {
+    return { enabled: false, findings: [], errors: [], coverage: notRunCoverage(batch) };
+  }
   if (!options.allowSourceTransmission) {
-    return failure('permission-denied', 'Explicit source transmission consent is required');
+    return failure(batch, 'permission-denied', 'Explicit source transmission consent is required');
   }
   if (!options.provider) {
     return failure(
+      batch,
       'configuration',
       options.providerConfigurationError ?? 'AI provider is not configured',
     );
@@ -68,7 +82,9 @@ export async function runAIReview(
 
   const findings: ReportAIFinding[] = [];
   const errors: AIReviewError[] = [];
+  const coverage: AIReviewCoverage[] = [];
   for (const [index, file] of batch.files.entries()) {
+    const totalIndexedFunctions = file.result.analysis.functions.length;
     const contextResult = buildAIReviewContext({
       source: file.result.analysis.source,
       analysis: file.result.analysis,
@@ -80,8 +96,10 @@ export async function runAIReview(
         category: 'context-invalid',
         message: summarizeValidationErrors(contextResult.errors),
       });
+      coverage.push(coverageEntry(file.filePath, totalIndexedFunctions, 0, 'failed'));
       continue;
     }
+    const selectedForAIReview = contextResult.context.target.kind === 'function' ? 1 : 0;
 
     try {
       const response = await requestAIReview(options.provider, {
@@ -99,6 +117,12 @@ export async function runAIReview(
           category: 'response-invalid',
           message: summarizeValidationErrors(validated.errors),
         });
+        coverage.push(coverageEntry(
+          file.filePath,
+          totalIndexedFunctions,
+          selectedForAIReview,
+          'failed',
+        ));
         continue;
       }
       findings.push(...validated.findings.map((finding) => ({
@@ -106,6 +130,12 @@ export async function runAIReview(
         filePath: file.filePath,
         model: { providerId: response.providerId, modelId: response.modelId },
       })));
+      coverage.push(coverageEntry(
+        file.filePath,
+        totalIndexedFunctions,
+        selectedForAIReview,
+        totalIndexedFunctions > selectedForAIReview ? 'partial' : 'complete',
+      ));
     } catch (error) {
       const structured = error instanceof AIProviderError
         ? error
@@ -115,6 +145,12 @@ export async function runAIReview(
         category: structured.category,
         message: structured.message,
       });
+      coverage.push(coverageEntry(
+        file.filePath,
+        totalIndexedFunctions,
+        selectedForAIReview,
+        'failed',
+      ));
     }
   }
 
@@ -123,15 +159,46 @@ export async function runAIReview(
     || left.range.start.offset - right.range.start.offset
     || left.id.localeCompare(right.id)
   ));
-  return { enabled: true, findings, errors };
+  return { enabled: true, findings, errors, coverage };
 }
 
-function failure(category: AIReviewError['category'], message: string): AIReviewRunResult {
+function failure(
+  batch: BatchReviewResult,
+  category: AIReviewError['category'],
+  message: string,
+): AIReviewRunResult {
   return {
     enabled: true,
     findings: [],
     errors: [{ filePath: '<review>', category, message }],
+    coverage: notRunCoverage(batch),
   };
+}
+
+function coverageEntry(
+  filePath: string,
+  totalIndexedFunctions: number,
+  selectedForAIReview: number,
+  status: AICoverageStatus,
+): AIReviewCoverage {
+  return {
+    filePath,
+    totalIndexedFunctions,
+    selectedForAIReview,
+    notReviewedFunctions: status === 'failed'
+      ? totalIndexedFunctions
+      : Math.max(0, totalIndexedFunctions - selectedForAIReview),
+    status,
+  };
+}
+
+function notRunCoverage(batch: BatchReviewResult): AIReviewCoverage[] {
+  return batch.files.map((file) => coverageEntry(
+    file.filePath,
+    file.result.analysis.functions.length,
+    0,
+    'not-run',
+  ));
 }
 
 function summarizeValidationErrors(

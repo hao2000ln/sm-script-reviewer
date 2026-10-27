@@ -17,7 +17,10 @@ test('AI review is disabled by default and requires explicit transmission consen
     modelId: 'test-model',
     timeoutMs: 100,
   });
-  assert.deepEqual(disabled, { enabled: false, findings: [], errors: [] });
+  assert.equal(disabled.enabled, false);
+  assert.deepEqual(disabled.findings, []);
+  assert.deepEqual(disabled.errors, []);
+  assert.equal(disabled.coverage[0].status, 'not-run');
   assert.equal(provider.calls, 0);
 
   const denied = await runAIReview(batch, {
@@ -63,6 +66,27 @@ test('malformed AI response becomes a structured error without erasing static re
   assert.equal(result.findings.length, 0);
   assert.equal(result.errors[0].category, 'response-invalid');
   assert.ok(batch.files[0].result.findings.length > 0);
+  assert.equal(result.coverage[0].status, 'failed');
+});
+
+test('single-context MVP reports partial function coverage transparently', async () => {
+  const batch = createBatch(`function first() {}
+function second() {}
+function third() {}`);
+  const result = await runAIReview(batch, {
+    enabled: true,
+    allowSourceTransmission: true,
+    provider: new ContextResponseProvider(),
+    modelId: 'test-model',
+    timeoutMs: 100,
+  });
+  assert.deepEqual(result.coverage, [{
+    filePath: 'test.js',
+    totalIndexedFunctions: 3,
+    selectedForAIReview: 1,
+    notReviewedFunctions: 2,
+    status: 'partial',
+  }]);
 });
 
 class ContextResponseProvider implements AIProvider {

@@ -19,6 +19,7 @@ test('CLI reports missing consent and missing API key without losing static find
     assert.equal(denied.stderr, '');
     const deniedReport = JSON.parse(denied.stdout) as ReviewReport;
     assert.equal(deniedReport.aiErrors?.[0].category, 'permission-denied');
+    assert.equal(deniedReport.aiCoverage?.[0].status, 'not-run');
     assert.ok(deniedReport.findings.length > 0);
 
     const missingKey = await runCli(file, [
@@ -69,7 +70,9 @@ test('CLI performs an opted-in AI review against a local OpenAI-compatible serve
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Test server unavailable');
   try {
-    await writeFile(file, 'print("debug");', 'utf8');
+    await writeFile(file, `function first() { print("debug"); }
+function second() {}
+function third() {}`, 'utf8');
     const result = await runCli(file, [
       '--ai',
       '--allow-source-transmission',
@@ -80,11 +83,18 @@ test('CLI performs an opted-in AI review against a local OpenAI-compatible serve
     assert.equal(result.status, 1);
     assert.equal(result.stderr, '');
     const report = JSON.parse(result.stdout) as ReviewReport;
-    assert.equal(report.findings[0].ruleId, 'SM-DBG-001');
+    assert.ok(report.findings.some(({ ruleId }) => ruleId === 'SM-DBG-001'));
     assert.equal(report.aiFindings?.[0].message, 'AI test finding');
     assert.deepEqual(report.aiFindings?.[0].model, {
       providerId: 'openai-compatible',
       modelId: 'local-test-model',
+    });
+    assert.deepEqual(report.aiCoverage?.[0], {
+      filePath: file,
+      totalIndexedFunctions: 3,
+      selectedForAIReview: 1,
+      notReviewedFunctions: 2,
+      status: 'partial',
     });
   } finally {
     await new Promise<void>((resolveClose, reject) => server.close((error) => error ? reject(error) : resolveClose()));

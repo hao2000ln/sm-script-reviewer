@@ -39,6 +39,7 @@ test('JSON report is versioned, filtered, deterministic, and preserves fingerpri
     assert.equal(report.summary.files, 1);
     assert.equal(report.summary.findings, 1);
     assert.equal(report.summary.skippedFiles, 1);
+    assert.equal('aiCoverage' in report, false);
     assert.equal(report.findings[0].ruleId, 'SM-DBG-001');
     assert.equal(
       report.findings[0].fingerprint,
@@ -194,6 +195,13 @@ test('text and HTML reports label and escape model-generated findings separately
       ai: {
         enabled: true,
         errors: [],
+        coverage: [{
+          filePath: sourcePath,
+          totalIndexedFunctions: 3,
+          selectedForAIReview: 1,
+          notReviewedFunctions: 2,
+          status: 'partial',
+        }],
         findings: [{
           id: 'ai:test',
           filePath: sourcePath,
@@ -216,11 +224,20 @@ test('text and HTML reports label and escape model-generated findings separately
     const text = renderTextReview(report);
     const html = renderHtmlReport(report);
     assert.match(text, /AI-WARNING \[MODEL-GENERATED\]/u);
+    assert.match(text, /AI-WARNING Partial review/u);
     assert.match(html, /AI review \(model-generated\)/u);
+    assert.match(html, /not fully AI-reviewed/u);
     assert.match(html, /&lt;model observation&gt;/u);
     assert.doesNotMatch(html, /<model observation>/u);
     assert.equal(report.findings.some(({ ruleId }) => ruleId.startsWith('AI')), false);
     assert.equal(report.aiFindings?.length, 1);
+    assert.deepEqual(report.aiCoverage?.[0], {
+      filePath: sourcePath,
+      totalIndexedFunctions: 3,
+      selectedForAIReview: 1,
+      notReviewedFunctions: 2,
+      status: 'partial',
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }

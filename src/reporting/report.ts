@@ -1,6 +1,11 @@
 import type { ParseIssue } from '../core/types';
 import { TOOL_VERSION } from '../core/version';
-import type { AIReviewError, AIReviewRunResult, ReportAIFinding } from '../ai/orchestrator';
+import type {
+  AIReviewCoverage,
+  AIReviewError,
+  AIReviewRunResult,
+  ReportAIFinding,
+} from '../ai/orchestrator';
 import type { BatchReviewResult, ReviewFailure } from '../reviewer/batch';
 import type {
   Finding,
@@ -69,6 +74,7 @@ export interface ReviewReport {
   readonly failures: readonly ReviewFailure[];
   readonly aiFindings?: readonly ReportAIFinding[];
   readonly aiErrors?: readonly AIReviewError[];
+  readonly aiCoverage?: readonly AIReviewCoverage[];
 }
 
 const SEVERITY_RANK: Readonly<Record<RuleSeverity, number>> = {
@@ -149,6 +155,7 @@ export function createReviewReport(
     ...(options.ai ? {
       aiFindings: aiFindings ?? [],
       aiErrors: [...options.ai.errors],
+      aiCoverage: [...options.ai.coverage],
     } : {}),
   };
 }
