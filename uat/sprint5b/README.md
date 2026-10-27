@@ -12,7 +12,35 @@ The runner starts an OpenAI-compatible HTTP mock bound only to `127.0.0.1` and
 checks successful model findings, HTTP 429 fallback, malformed responses,
 unsaved content, and partial one-function coverage.
 
-For manual UAT, start `node uat/sprint4/mock-openai.cjs`, configure
-`smReviewer.ai.endpoint` to its `http://127.0.0.1` URL, save a dummy key using
-the extension command, enable `smReviewer.ai.enabled`, then invoke the AI
-command and approve consent. Do not use a production key for mock UAT.
+## Manual VS Code Extension UAT
+
+Start this server in a dedicated Git Bash terminal and leave it running while
+using the Extension Development Host:
+
+```bash
+node uat/sprint5b/mock-openai.cjs
+```
+
+It binds only to `127.0.0.1:8787`. In VS Code Settings configure:
+
+```json
+{
+  "smReviewer.ai.enabled": true,
+  "smReviewer.ai.model": "local-mock-model",
+  "smReviewer.ai.endpoint": "http://127.0.0.1:8787/v1/chat/completions",
+  "smReviewer.ai.timeoutMs": 30000
+}
+```
+
+Run **SM Reviewer: Set AI API Key** and enter any non-empty dummy value, then
+run **SM Reviewer: AI Review Current File** and approve the consent prompt.
+Expected result: a validated diagnostic with source `SM Reviewer AI`; no real
+API call occurs. To verify deterministic HTTP 429 handling, temporarily set
+the endpoint to:
+
+```text
+http://127.0.0.1:8787/v1/chat/completions?scenario=429
+```
+
+Static diagnostics must remain after the AI warning. Stop the server with
+`Ctrl+C`. Do not use a production key for mock UAT.

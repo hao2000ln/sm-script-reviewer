@@ -108,6 +108,26 @@ test('global lifecycle invalidation rejects tokens before clearAll', () => {
   assert.equal(lifecycle.isCurrent(afterClearAll, 1), true);
 });
 
+test('an edit invalidates completed AI diagnostics without affecting another document token', () => {
+  const aiLifecycle = new ReviewLifecycle();
+  const edited = aiLifecycle.begin('file:///edited.js', 1);
+  const unrelated = aiLifecycle.begin('file:///unrelated.js', 1);
+
+  aiLifecycle.clear('file:///edited.js');
+  assert.equal(aiLifecycle.isCurrent(edited, 1), false);
+  assert.equal(aiLifecycle.isCurrent(unrelated, 1), true);
+});
+
+test('an edit invalidates a pending AI review before its response can publish', () => {
+  const aiLifecycle = new ReviewLifecycle();
+  const pending = aiLifecycle.begin('file:///edited.js', 1);
+
+  // onDidChangeTextDocument calls clear before the asynchronous provider settles.
+  aiLifecycle.clear('file:///edited.js');
+  assert.equal(aiLifecycle.isCurrent(pending, 2), false);
+  assert.equal(aiLifecycle.isCurrent(pending, 1), false);
+});
+
 test('reuses SM static rules in the extension adapter', () => {
   const reviewed = reviewInMemoryDocument({
     uri: 'file:///sm.js',

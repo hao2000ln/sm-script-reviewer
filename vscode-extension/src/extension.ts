@@ -29,6 +29,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('smReviewer.setAiApiKey', () => controller.setAiApiKey()),
     vscode.commands.registerCommand('smReviewer.clearAiApiKey', () => controller.clearAiApiKey()),
     vscode.languages.registerHoverProvider([{ language: 'javascript' }, { pattern: '**/*.txt' }], controller),
+    vscode.workspace.onDidChangeTextDocument((event) => controller.invalidateAIForEdit(event.document.uri)),
     vscode.workspace.onDidSaveTextDocument((document) => void controller.reviewOnSave(document)),
     vscode.workspace.onDidCloseTextDocument((document) => controller.clear(document.uri)),
     vscode.workspace.onDidChangeConfiguration((event) => controller.handleConfigurationChange(event)),
@@ -146,6 +147,11 @@ class ExtensionReviewController implements vscode.HoverProvider {
     this.#lifecycle.clear(uri.toString());
     this.#presentations.delete(uri.toString());
     this.collection.delete(uri);
+    this.clearAI(uri);
+  }
+
+  /** Editing makes both an in-flight response and published AI ranges stale. */
+  invalidateAIForEdit(uri: vscode.Uri): void {
     this.clearAI(uri);
   }
 
