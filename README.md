@@ -82,11 +82,27 @@ PowerShell setup and example:
 
 ```powershell
 $env:SM_REVIEWER_AI_API_KEY = '<api-key>'
-npm run review -- review ./samples/example.js --ai --allow-source-transmission `
+npm run review -- review ./examples/sample.js --ai --allow-source-transmission `
   --ai-model gpt-4o-mini `
   --ai-endpoint https://api.openai.com/v1/chat/completions `
   --ai-timeout 30000 --format json
 ```
+
+For local development or UAT, copy `.env.example` to `.env` and provide values
+locally:
+
+```dotenv
+SM_REVIEWER_AI_API_KEY=your-api-key
+SM_REVIEWER_AI_MODEL=gpt-4o-mini
+SM_REVIEWER_AI_ENDPOINT=https://api.openai.com/v1/chat/completions
+SM_REVIEWER_AI_TIMEOUT_MS=30000
+```
+
+Configuration priority is CLI arguments, then operating-system environment,
+then `.env`, then application defaults. Missing `.env` files are ignored.
+Neither credentials nor other environment settings enable AI or source
+transmission: both `--ai` and `--allow-source-transmission` remain explicit.
+`.env` and `.env.*` are ignored by Git; `.env.example` is safe to commit.
 
 The live adapter supports one OpenAI-compatible chat-completions endpoint.
 Remote endpoints must use HTTPS; plain HTTP is accepted only for localhost test
