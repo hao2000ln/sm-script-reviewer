@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-10-27T08:43:14.166Z",
+  "toolVersion": "0.1.0",
+  "inputPath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js",
+  "failureThreshold": "warning",
+  "summary": {
+    "files": 1,
+    "findings": 0,
+    "diagnostics": 0,
+    "skippedRules": 2,
+    "ruleErrors": 0,
+    "failures": 0,
+    "skippedFiles": 0,
+    "aiFindings": 0,
+    "aiErrors": 1
+  },
+  "files": [
+    {
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js",
+      "sourceHash": "e786feabb0298cb3e28a81118984e48de74b29e8c4766b151e76ce53eebb5754",
+      "findingCount": 0,
+      "diagnosticCount": 0,
+      "skippedRuleCount": 2,
+      "ruleErrorCount": 0
+    }
+  ],
+  "findings": [],
+  "diagnostics": [],
+  "skippedRules": [
+    {
+      "ruleId": "SM-CMT-002",
+      "reason": "disabled",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js"
+    },
+    {
+      "ruleId": "SM-CMT-003",
+      "reason": "disabled",
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js"
+    }
+  ],
+  "ruleErrors": [],
+  "failures": [],
+  "aiFindings": [],
+  "aiErrors": [
+    {
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js",
+      "category": "rate-limited",
+      "message": "AI provider returned HTTP 429"
+    }
+  ],
+  "aiCoverage": [
+    {
+      "filePath": "D:\\HPT_SM\\WEB_APP\\APPLICATION\\sm-script-reviewer\\examples\\sample.js",
+      "totalIndexedFunctions": 1,
+      "selectedForAIReview": 1,
+      "notReviewedFunctions": 1,
+      "status": "failed"
+    }
+  ]
+}
