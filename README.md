@@ -82,28 +82,11 @@ PowerShell setup and example:
 
 ```powershell
 $env:SM_REVIEWER_AI_API_KEY = '<api-key>'
-npm run review -- review ./examples/sample.js --ai --allow-source-transmission `
+npm run review -- review ./samples/example.js --ai --allow-source-transmission `
   --ai-model gpt-4o-mini `
   --ai-endpoint https://api.openai.com/v1/chat/completions `
   --ai-timeout 30000 --format json
 ```
-
-For local development or UAT, copy `.env.example` to `.env` and provide the
-values locally:
-
-```dotenv
-SM_REVIEWER_AI_API_KEY=your-api-key
-SM_REVIEWER_AI_MODEL=gpt-4o-mini
-SM_REVIEWER_AI_ENDPOINT=https://api.openai.com/v1/chat/completions
-SM_REVIEWER_AI_TIMEOUT_MS=30000
-```
-
-Configuration priority is CLI arguments, then operating-system/`.env`
-variables, then application defaults. Existing operating-system variables take
-priority over matching `.env` values. Missing `.env` files are ignored. Neither
-an API key nor any other environment setting enables AI or source transmission;
-both `--ai` and `--allow-source-transmission` remain explicit CLI choices. `.env`
-and `.env.*` are ignored by Git, while `.env.example` is safe to commit.
 
 The live adapter supports one OpenAI-compatible chat-completions endpoint.
 Remote endpoints must use HTTPS; plain HTTP is accepted only for localhost test
@@ -122,7 +105,7 @@ Sprint 3 Phase B status remains: **Static Code Review Approved — Independent
 Verification & SM 9.8x UAT Pending.**
 
 Latest local MVP verification (2026-10-27): `npm run build` passed, `npm test`
-passed 135/135 tests, and `node sprint2-acceptance.cjs` passed 17/17 cases. The
+passed 127/127 tests, and `node sprint2-acceptance.cjs` passed 17/17 cases. The
 HTTP tests use localhost mocks and make no paid provider calls.
 
 ## Codex collaboration contract
