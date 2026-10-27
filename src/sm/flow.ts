@@ -35,10 +35,79 @@ export function assessSmQueryLoopProgress(
   target: SmQueryLoopTarget,
   analysis: SmAnalysis,
 ): SmLoopProgress {
-  if (hasSyntacticLoopExit(loop as LoopStatement)) return 'possible-exit';
-  const result = processStatement(loop.statement, [{ progressed: false, active: true }], target, analysis);
+  if (
+    hasSyntacticLoopExit(loop as LoopStatement)
+    || hasContinueLeavingLoop(loop as LoopStatement)
+  ) {
+    return 'possible-exit';
+  }
+  let result = processStatement(
+    loop.statement,
+    [{ progressed: false, active: true }],
+    target,
+    analysis,
+  );
+  if (ts.isForStatement(loop) && loop.incrementor) {
+    // Both a normal body completion and `continue` reach a for-loop's
+    // incrementor. Reactivate the latter paths before evaluating it.
+    result = combineResults(
+      result,
+      processExpression(
+        loop.incrementor,
+        result.paths.map((path) => ({ ...path, active: true })),
+        target,
+        analysis,
+      ),
+    );
+  }
   if (result.unknown) return 'unknown';
   return result.paths.some(({ progressed }) => !progressed) ? 'missing' : 'progresses';
+}
+
+function combineResults(previous: ProgressResult, next: ProgressResult): ProgressResult {
+  return {
+    paths: next.paths,
+    unknown: previous.unknown || next.unknown,
+  };
+}
+
+function hasContinueLeavingLoop(loop: LoopStatement): boolean {
+  let leavesLoop = false;
+  const visit = (node: ts.Node): void => {
+    if (leavesLoop || (node !== loop && ts.isFunctionLike(node))) return;
+    if (ts.isContinueStatement(node) && node.label) {
+      const target = findLabeledContinueTarget(node);
+      if (!target || isAncestorLoop(target, loop)) leavesLoop = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(loop.statement);
+  return leavesLoop;
+}
+
+function findLabeledContinueTarget(statement: ts.ContinueStatement): LoopStatement | undefined {
+  const label = statement.label?.text;
+  if (!label) return undefined;
+  for (let current: ts.Node | undefined = statement.parent; current; current = current.parent) {
+    if (ts.isFunctionLike(current)) return undefined;
+    if (!ts.isLabeledStatement(current) || current.label.text !== label) continue;
+    let target: ts.Statement = current.statement;
+    while (ts.isLabeledStatement(target)) target = target.statement;
+    return ts.isWhileStatement(target) || ts.isDoStatement(target) || ts.isForStatement(target)
+      ? target
+      : undefined;
+  }
+  return undefined;
+}
+
+function isAncestorLoop(candidate: LoopStatement, loop: LoopStatement): boolean {
+  if (candidate === loop) return false;
+  for (let current: ts.Node | undefined = loop.parent; current; current = current.parent) {
+    if (current === candidate) return true;
+    if (ts.isFunctionLike(current)) return false;
+  }
+  return false;
 }
 
 function parseSuccessCondition(

@@ -57,9 +57,11 @@ variable to originate from the same tracked SCFile binding's `doSelect` or
 
 Supported body flow is bounded to a finite set of path states across sequential
 statements, blocks, and if/else. An unconditional matching `getNext` update makes
-all continuing paths progress. A conditional update without an else leaves a
-non-progress path. A possible break/return/throw suppresses the finding under the
-shared conservative exit policy.
+all continuing paths progress. For-loop incrementors are included, and a
+`continue` path reaches the incrementor as required by JavaScript semantics. A
+conditional update without an else leaves a non-progress path. A possible
+break/return/throw suppresses the finding under the shared conservative exit
+policy.
 
 Nested loops, switch, try/catch/finally, unknown return-code reassignment, deep
 aliases, and dynamic property calls produce unknown and suppress deterministic
@@ -73,9 +75,10 @@ so complexity is bounded by AST size rather than runtime iteration count.
   than one hop are unknown.
 - Any supported/ambiguous return-code use suppresses `SM-RC-001`, even if only one
   branch handles the result.
-- A closure declared before a return-code producer may consume the later value,
-  but the current source-order intraprocedural model can miss that relationship
-  and report assigned-but-unconsumed. Representative-source UAT must measure it.
+- Deferred function bodies are analyzed for their own local findings, but are not
+  treated as executed at declaration time. Captured SCFile identity is unknown;
+  captured return-code reads make the producer ambiguous. Invocation order and
+  call effects remain intentionally unmodeled.
 - Any possible syntactic loop exit suppresses `SM-LOOP-002`, even if unreachable.
 - Unknown helper calls are not assumed to advance the tracked return-code
   variable; the finding still describes only missing visible supported progress.

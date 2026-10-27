@@ -10,6 +10,10 @@ export type SmSymbolValue =
     readonly resultId: string;
     readonly bindingId: string;
     readonly method: string;
+  }
+  | {
+    readonly kind: 'captured-return-code';
+    readonly resultId: string;
   };
 
 export const UNKNOWN_SYMBOL: SmSymbolValue = Object.freeze({ kind: 'unknown' });
@@ -35,6 +39,15 @@ export class SmSymbolTracker implements SmSymbolSnapshot {
 
   clone(): SmSymbolTracker {
     return new SmSymbolTracker(this.#scopes);
+  }
+
+  cloneForDeferredFunction(): SmSymbolTracker {
+    return new SmSymbolTracker(this.#scopes.map((scope) => ({
+      ...scope,
+      values: new Map(
+        [...scope.values].map(([name, value]) => [name, deferredValue(value)]),
+      ),
+    })));
   }
 
   snapshot(): SmSymbolSnapshot {
@@ -118,6 +131,20 @@ function sameSymbol(left: SmSymbolValue, right: SmSymbolValue): boolean {
   if (left.kind === 'return-code' && right.kind === 'return-code') {
     return left.resultId === right.resultId;
   }
+  if (left.kind === 'captured-return-code' && right.kind === 'captured-return-code') {
+    return left.resultId === right.resultId;
+  }
   return false;
+}
+
+function deferredValue(value: SmSymbolValue): SmSymbolValue {
+  if (value.kind === 'return-code') {
+    return { kind: 'captured-return-code', resultId: value.resultId };
+  }
+  // Invocation time and ordering are unknown. An outer SCFile binding may be
+  // reassigned before the function runs, so retaining its exact identity
+  // would turn a lexical observation into a false execution claim.
+  if (value.kind === 'scfile') return UNKNOWN_SYMBOL;
+  return value;
 }
 

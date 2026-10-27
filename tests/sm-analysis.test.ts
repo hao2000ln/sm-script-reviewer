@@ -131,3 +131,25 @@ first['doSelect']('true');
   ]);
 });
 
+test('analyzes deferred function-local state without executing captured state', () => {
+  const result = analyzeSm(`
+var outer = new SCFile('contacts');
+var rc = outer.doSelect('true');
+var callback = function () {
+  outer = createUnknown();
+  if (rc == RC_SUCCESS) outer.doUpdate();
+  var local = new SCFile('probsummary');
+  local.doSelect('true');
+};
+outer.doUpdate();
+`);
+
+  assert.deepEqual(result.constructions.map(({ bindingName }) => bindingName), ['outer', 'local']);
+  assert.deepEqual(result.calls.map(({ receiverName, method }) => [receiverName, method]), [
+    ['outer', 'doSelect'],
+    ['local', 'doSelect'],
+    ['outer', 'doUpdate'],
+  ]);
+  assert.equal(result.returnCodes[0].status, 'ambiguous');
+});
+

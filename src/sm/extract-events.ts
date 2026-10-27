@@ -25,6 +25,7 @@ interface ExtractionState {
   readonly comparisons: SmReturnCodeComparisonEvent[];
   readonly callsByNode: Map<ts.CallExpression, SmCallEvent>;
   readonly loopSymbols: Map<SmLoopNode, ReturnType<SmSymbolTracker['snapshot']>>;
+  readonly deferredCapturedNames: Map<string, Set<string>>;
   currentFunctionId: string;
 }
 
@@ -38,6 +39,7 @@ export function extractSmEvents(context: RuleContext): SmAnalysis {
     comparisons: [],
     callsByNode: new Map(),
     loopSymbols: new Map(),
+    deferredCapturedNames: new Map(),
     currentFunctionId: '<source>',
   };
   const symbols = new SmSymbolTracker();
@@ -225,16 +227,21 @@ function analyzeFunction(
   outerSymbols: SmSymbolTracker,
   state: ExtractionState,
 ): void {
-  if (!node.body || !ts.isBlock(node.body)) return;
-  const symbols = outerSymbols.clone();
+  if (!node.body) return;
+  registerDeferredCaptures(node, state.currentFunctionId, state);
+  const symbols = outerSymbols.cloneForDeferredFunction();
   const previousFunction = state.currentFunctionId;
   state.currentFunctionId = `function:${node.getStart(state.context.sourceFile)}`;
   symbols.enterScope(state.currentFunctionId, 'function');
   for (const parameter of node.parameters) {
     if (ts.isIdentifier(parameter.name)) symbols.declare(parameter.name.text);
   }
-  predeclareFunctionScoped(node.body, symbols);
-  processBlock(node.body, symbols, state);
+  if (ts.isBlock(node.body)) {
+    predeclareFunctionScoped(node.body, symbols);
+    processBlock(node.body, symbols, state);
+  } else {
+    evaluateExpression(node.body, symbols, state, 'returned');
+  }
   symbols.leaveScope();
   state.currentFunctionId = previousFunction;
 }
@@ -251,6 +258,10 @@ function evaluateExpression(
   if (ts.isIdentifier(node)) {
     const value = symbols.resolve(node.text) ?? UNKNOWN_SYMBOL;
     if (value.kind === 'return-code') markReturnCodeUse(value.resultId, usage, state);
+    if (value.kind === 'captured-return-code') {
+      markReturnCodeUse(value.resultId, 'unknown', state);
+      return UNKNOWN_SYMBOL;
+    }
     if (value.kind === 'scfile' && usage === 'assigned' && targetName !== node.text) {
       return value.aliasDepth === 0
         ? { ...value, aliasDepth: 1 }
@@ -406,7 +417,11 @@ function createCallEvent(
     id: resultId,
     call,
     ...(targetName ? { targetName } : {}),
-    status: initialReturnCodeStatus(usage),
+    status: initialReturnCodeStatus(
+      usage,
+      targetName !== undefined
+        && state.deferredCapturedNames.get(state.currentFunctionId)?.has(targetName) === true,
+    ),
   };
   state.calls.push(call);
   state.callsByNode.set(node, call);
@@ -477,10 +492,83 @@ function markLoopBackEdgeConditionUses(
   visit(condition);
 }
 
-function initialReturnCodeStatus(usage: SmResultUse): SmReturnCodeRecord['status'] {
+function initialReturnCodeStatus(
+  usage: SmResultUse,
+  capturedByDeferredFunction = false,
+): SmReturnCodeRecord['status'] {
   if (usage === 'condition' || usage === 'returned' || usage === 'passed') return 'consumed';
   if (usage === 'unknown') return 'ambiguous';
+  if (capturedByDeferredFunction && usage === 'assigned') return 'ambiguous';
   return 'unhandled';
+}
+
+function registerDeferredCaptures(
+  node: ts.FunctionLikeDeclaration,
+  ownerFunctionId: string,
+  state: ExtractionState,
+): void {
+  const captured = collectCapturedNames(node);
+  if (captured.size === 0) return;
+  const existing = state.deferredCapturedNames.get(ownerFunctionId) ?? new Set<string>();
+  for (const name of captured) existing.add(name);
+  state.deferredCapturedNames.set(ownerFunctionId, existing);
+}
+
+function collectCapturedNames(node: ts.FunctionLikeDeclaration): Set<string> {
+  const declared = new Set<string>();
+  for (const parameter of node.parameters) collectBindingNames(parameter.name, declared);
+
+  const collectDeclarations = (current: ts.Node): void => {
+    if (current !== node && ts.isFunctionLike(current)) {
+      if (ts.isFunctionDeclaration(current) && current.name) declared.add(current.name.text);
+      return;
+    }
+    if (ts.isVariableDeclaration(current)) collectBindingNames(current.name, declared);
+    if (ts.isCatchClause(current) && current.variableDeclaration) {
+      collectBindingNames(current.variableDeclaration.name, declared);
+    }
+    ts.forEachChild(current, collectDeclarations);
+  };
+  collectDeclarations(node.body!);
+
+  const captured = new Set<string>();
+  const collectReferences = (current: ts.Node): void => {
+    if (current !== node && ts.isFunctionLike(current)) return;
+    if (ts.isIdentifier(current) && isIdentifierReference(current) && !declared.has(current.text)) {
+      captured.add(current.text);
+    }
+    ts.forEachChild(current, collectReferences);
+  };
+  collectReferences(node.body!);
+  return captured;
+}
+
+function collectBindingNames(name: ts.BindingName, target: Set<string>): void {
+  if (ts.isIdentifier(name)) {
+    target.add(name.text);
+    return;
+  }
+  for (const element of name.elements) {
+    if (!ts.isOmittedExpression(element)) collectBindingNames(element.name, target);
+  }
+}
+
+function isIdentifierReference(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  if (
+    (ts.isVariableDeclaration(parent) && parent.name === node)
+    || (ts.isParameter(parent) && parent.name === node)
+    || (ts.isFunctionDeclaration(parent) && parent.name === node)
+    || (ts.isFunctionExpression(parent) && parent.name === node)
+    || (ts.isPropertyAccessExpression(parent) && parent.name === node)
+    || (ts.isPropertyAssignment(parent) && parent.name === node)
+    || (ts.isMethodDeclaration(parent) && parent.name === node)
+    || (ts.isLabeledStatement(parent) && parent.label === node)
+    || ((ts.isBreakStatement(parent) || ts.isContinueStatement(parent)) && parent.label === node)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function predeclareFunctionScoped(root: ts.Node, symbols: SmSymbolTracker): void {
@@ -571,6 +659,9 @@ function sameValue(left: SmSymbolValue, right: SmSymbolValue): boolean {
     return left.bindingId === right.bindingId && left.aliasDepth === right.aliasDepth;
   }
   if (left.kind === 'return-code' && right.kind === 'return-code') {
+    return left.resultId === right.resultId;
+  }
+  if (left.kind === 'captured-return-code' && right.kind === 'captured-return-code') {
     return left.resultId === right.resultId;
   }
   return false;
