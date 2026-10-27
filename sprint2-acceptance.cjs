@@ -61,7 +61,14 @@ const tests = [
       r.skippedRules
         .filter(s => s.reason === "syntax-errors")
         .map(s => s.ruleId),
-      ["SM-CMT-001", "SM-CODE-001", "SM-DBG-001", "SM-LOOP-001"]
+      [
+        "SM-CMT-001",
+        "SM-CODE-001",
+        "SM-DBG-001",
+        "SM-LOOP-001",
+        "SM-LOOP-002",
+        "SM-RC-001"
+      ]
     );
     assert.deepEqual(
       r.skippedRules
