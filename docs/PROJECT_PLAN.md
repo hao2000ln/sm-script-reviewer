@@ -58,7 +58,7 @@ flowchart TD
 | 1 | 2 tuần | Core Foundation & Parser | Hoàn tất và đã merge |
 | 2 | 2 tuần | Static Rule Engine | Hoàn tất và đã merge |
 | 3 | 2 tuần | SM-Specific Rules & Reports | Phase C hoàn tất local, chờ independent review và UAT |
-| 4 | 2 tuần | AI Review Engine | Chưa bắt đầu |
+| 4 | 2 tuần | AI Review Engine | Phase A hoàn tất local, chờ independent review |
 | 5 | 2 tuần | VS Code Extension | Chưa bắt đầu |
 | 6 | 2 tuần | SM Connector & UAT | Chưa bắt đầu |
 
@@ -147,6 +147,11 @@ flowchart TD
 
 **Đầu ra:** Review kết hợp Static Analysis + AI.
 
+**Tiến độ:** Phase A foundation đã hoàn tất local với provider-independent
+contracts, function-level context builder, token-budget estimate, AI finding
+schema, runtime validation, privacy defaults và offline fake provider. Chưa có
+provider thật, network call, API key, AI CLI hoặc thay đổi static review output.
+
 **Tiêu chí hoàn thành:**
 - AI nhận source context, dependency context và static findings có cấu trúc.
 - Mọi AI finding có evidence, confidence và phân biệt rõ fact với inference.
@@ -231,6 +236,7 @@ flowchart TD
 | Sprint 3 Phase A | Hoàn tất; `doClose` lifecycle đang bị chặn do thiếu evidence |
 | Sprint 3 Phase B | Static Code Review Approved; chờ independent verification và SM 9.8x UAT |
 | Sprint 3 Phase C | Hoàn tất local và acceptance; chờ independent review |
+| Sprint 4 Phase A | Hoàn tất local; chờ independent review |
 
 **Bước tiếp theo:** ChatGPT review độc lập Phase C CLI/reporting và project owner quyết định merge. Phase B vẫn chờ independent verification và semantic UAT trên source SM 9.8x đại diện; không được xem CLI acceptance là bằng chứng xác nhận SM semantics.
 
