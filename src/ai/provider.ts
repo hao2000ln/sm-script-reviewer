@@ -1,4 +1,5 @@
 import type { AIReviewContext } from './types';
+import { estimateSerializedPayloadUsage } from './token-budget';
 
 export type AIProviderErrorCategory =
   | 'cancelled'
@@ -22,6 +23,7 @@ export interface AIRequestLimits {
   readonly maxInputCharacters: number;
   readonly estimatedInputTokens: number;
   readonly reservedOutputTokens: number;
+  readonly estimatedCharactersPerToken: number;
 }
 
 export interface AIProviderRequest {
@@ -79,16 +81,29 @@ export async function requestAIReview(
       provider.id,
     );
   }
-  if (!Number.isInteger(request.limits.timeoutMs) || request.limits.timeoutMs <= 0) {
-    throw new AIProviderError('request-invalid', 'timeoutMs must be positive', false, provider.id);
+  const limitError = validateRequestLimits(request.limits);
+  if (limitError) {
+    throw new AIProviderError('request-invalid', limitError, false, provider.id);
   }
-  if (
-    request.context.estimatedUsage.contextCharacters > request.limits.maxInputCharacters
-    || request.context.estimatedUsage.estimatedInputTokens > request.limits.estimatedInputTokens
-  ) {
+  let payloadUsage;
+  try {
+    payloadUsage = estimateSerializedPayloadUsage(
+      request,
+      request.limits.estimatedCharactersPerToken,
+    );
+  } catch {
     throw new AIProviderError(
       'request-invalid',
-      'AI context exceeds configured request limits',
+      'AI request payload is not serializable',
+      false,
+      provider.id,
+    );
+  }
+  if (payloadUsage.serializedCharacters > request.limits.maxInputCharacters
+    || payloadUsage.estimatedInputTokens > request.limits.estimatedInputTokens) {
+    throw new AIProviderError(
+      'request-invalid',
+      'Serialized AI request exceeds configured request limits',
       false,
       provider.id,
     );
@@ -130,4 +145,20 @@ export async function requestAIReview(
     clearTimeout(timeout);
     options.signal?.removeEventListener('abort', cancel);
   }
+}
+
+function validateRequestLimits(limits: AIRequestLimits): string | undefined {
+  const fields: readonly (keyof AIRequestLimits)[] = [
+    'timeoutMs',
+    'maxInputCharacters',
+    'estimatedInputTokens',
+    'reservedOutputTokens',
+    'estimatedCharactersPerToken',
+  ];
+  for (const field of fields) {
+    if (!Number.isFinite(limits[field]) || limits[field] <= 0) {
+      return `${field} must be positive and finite`;
+    }
+  }
+  return undefined;
 }

@@ -12,11 +12,12 @@
 - function-first context builder using existing source, analysis, diagnostics,
   function index, and static findings;
 - deterministic character/token budgeting with explicit omission and truncation
-  metadata;
+  metadata plus full serialized-request enforcement at the provider boundary;
 - separate AI finding/evidence schema with assertion kind, confidence,
   provider/model metadata, and validation status;
 - local structured-response validation for fields, enums, confidence, source
-  identity/ranges, line mapping, and evidence references;
+  identity/ranges, line mapping, evidence references, finding-count limits, and
+  bounded text fields;
 - disabled-by-default privacy policy and composable redaction hooks.
 
 ## Architecture decisions
@@ -25,6 +26,9 @@ The static review pipeline and public contracts are unchanged. Source text is
 structured as untrusted data and is never combined with trusted instructions.
 AI findings do not extend or replace static findings. The token estimate is
 explicitly approximate and provider usage, when available, remains separate.
+The provider gateway measures the complete serialized request rather than
+trusting context usage metadata, and context construction rejects foreign or
+out-of-range static findings.
 See ADR 0004 for the complete decision and Phase B gates.
 
 ## Verification
@@ -34,10 +38,10 @@ Executed on 2026-10-27:
 | Command | Result |
 |---|---|
 | `npm run build` | Pass |
-| `npm test` | Pass; 111/111 tests |
+| `npm test` | Pass; 116/116 tests |
 | `node sprint2-acceptance.cjs` | Pass; 17/17 cases |
 
-The 14 focused AI foundation tests cover provider success/failures, permission,
+The 19 focused AI foundation tests cover provider success/failures, permission,
 timeout/cancellation, request limits, function context, stable ordering, source
 locations, small budgets, omissions/truncation, empty/invalid context,
 prompt-injection comments, parser diagnostics, malformed responses, confidence,

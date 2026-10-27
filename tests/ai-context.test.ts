@@ -21,9 +21,11 @@ function second() { print('debug'); return 2; }
   };
   const first = buildAIReviewContext(input);
   const second = buildAIReviewContext(input);
+  const reversed = buildAIReviewContext({ ...input, findings: [...findings].reverse() });
 
   assert.equal(first.ok, true);
   assert.deepEqual(first, second);
+  assert.equal(reversed.ok, true);
   if (!first.ok) return;
   assert.equal(first.context.target.kind, 'function');
   assert.equal(first.context.target.functionName, 'second');
@@ -32,6 +34,12 @@ function second() { print('debug'); return 2; }
   assert.equal(first.context.functions[0].name, 'second');
   assert.ok(first.context.evidence.some(({ id }) => id.startsWith('static:')));
   assert.equal(first.context.sourceHandling.trust, 'untrusted-data');
+  if (reversed.ok) {
+    assert.deepEqual(
+      first.context.evidence.map(({ id }) => id),
+      reversed.context.evidence.map(({ id }) => id),
+    );
+  }
 });
 
 test('applies a small estimated token budget with explicit truncation and omissions', () => {
@@ -61,7 +69,7 @@ test('applies a small estimated token budget with explicit truncation and omissi
   assert.equal(result.context.snippet.truncatedEnd, true);
   assert.ok(result.context.omissions.some(({ kind }) => kind === 'source'));
   assert.ok(result.context.omissions.some(({ kind }) => kind === 'finding'));
-  assert.ok(result.context.estimatedUsage.estimatedInputTokens <= 6);
+  assert.ok(result.context.estimatedUsage.estimatedContextTokens <= 6);
   assert.equal(result.context.estimatedUsage.estimation, 'character-approximation');
 });
 
@@ -144,9 +152,37 @@ test('includes parser diagnostics with parser provenance when budget permits', (
   assert.ok(result.context.parserLimitations.some((value) => value.includes('syntax errors')));
 });
 
-function document(content: string): SourceDocument {
+test('rejects static findings from another source or outside source offsets', () => {
+  const source = document('function current() { print("current"); }', 'source:current');
+  const other = document('function other() { print("other"); }', 'source:other');
+  const foreignFinding = review(other).findings[0];
+  const foreign = buildAIReviewContext({
+    source,
+    analysis: analyze(source),
+    findings: [foreignFinding],
+  });
+  assert.equal(foreign.ok, false);
+  if (!foreign.ok) assert.ok(foreign.errors.some(({ code }) => code === 'source-identity'));
+
+  const ownFinding = review(source).findings[0];
+  const invalidRange = buildAIReviewContext({
+    source,
+    analysis: analyze(source),
+    findings: [{
+      ...ownFinding,
+      range: {
+        ...ownFinding.range,
+        end: { line: 1, column: 999, offset: source.content.length + 1 },
+      },
+    }],
+  });
+  assert.equal(invalidRange.ok, false);
+  if (!invalidRange.ok) assert.ok(invalidRange.errors.some(({ code }) => code === 'range'));
+});
+
+function document(content: string, id = 'source:test'): SourceDocument {
   return {
-    id: 'source:test',
+    id,
     filePath: 'test.js',
     content,
     hash: createHash('sha256').update(content).digest('hex'),

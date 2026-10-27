@@ -26,12 +26,14 @@ remain usable without AI.
    into trusted instructions and must not alter reviewer policy.
 5. Select content deterministically. Preserve the target before optional nearby
    source, bound findings/functions, and record every budget-driven omission or
-   truncation.
+   truncation. Reject static findings whose source identity or source range does
+   not match the current `SourceDocument`.
 6. Use a labeled character-based token estimate. It is not provider token usage.
    Providers may report their own optional usage without changing the estimate.
 7. Validate structured responses locally. Reject malformed fields, invalid
    confidence, mismatched source identity, positions outside or inconsistent
-   with the supplied snippet, and unknown evidence references.
+   with the supplied snippet, unknown evidence references, excessive finding
+   counts, and oversized text fields.
 8. Disable AI and source transmission by default. Do not store credentials or
    log raw prompts/full source. Provide deterministic redaction hooks for future
    integrations.
@@ -46,6 +48,13 @@ source/evidence character limit is the smaller of the configured character limit
 and estimated input tokens multiplied by estimated characters per token. Target
 source is selected first. Findings, diagnostics, and nearby source are optional
 and are included only while budget remains.
+
+The builder's context-content estimate is distinct from the provider request
+budget. Immediately before provider invocation, the gateway serializes the full
+structured request—including trusted instructions, source/function metadata,
+evidence, limits, and permission fields—and independently checks its character
+size and approximate token count. Caller-supplied usage metadata is advisory and
+cannot bypass this enforcement.
 
 ## Privacy boundary
 

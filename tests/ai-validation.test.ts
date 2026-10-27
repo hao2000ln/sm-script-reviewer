@@ -51,6 +51,47 @@ test('rejects invented source positions, identities, and evidence references', (
   assert.ok(result.errors.some(({ code }) => code === 'range'));
 });
 
+test('enforces configurable finding-count and text-length boundaries', () => {
+  const context = createContext();
+  const boundary = finding(context) as Record<string, unknown>;
+  boundary.message = 'x'.repeat(128);
+  const accepted = validateAIResponse({ findings: [boundary] }, context, {
+    maxFindings: 1,
+    maxTextFieldCharacters: 128,
+    maxEvidenceReferences: 1,
+  });
+  assert.equal(accepted.errors.length, 0);
+  assert.equal(accepted.findings.length, 1);
+
+  const tooMany = validateAIResponse({ findings: [finding(context), finding(context)] }, context, {
+    maxFindings: 1,
+  });
+  assert.equal(tooMany.findings.length, 0);
+  assert.ok(tooMany.errors.some(({ path, code }) => path === 'findings' && code === 'limit'));
+
+  const sensitive = 'DO_NOT_ECHO_'.repeat(20);
+  const oversized = finding(context) as Record<string, unknown>;
+  oversized.explanation = sensitive;
+  const rejected = validateAIResponse({ findings: [oversized] }, context, {
+    maxTextFieldCharacters: 64,
+  });
+  assert.equal(rejected.findings.length, 0);
+  assert.ok(rejected.errors.some(({ path, code }) => (
+    path === 'findings[0].explanation' && code === 'limit'
+  )));
+  assert.ok(rejected.errors.every(({ message }) => !message.includes(sensitive)));
+});
+
+test('rejects invalid validation limits without inspecting untrusted result content', () => {
+  const context = createContext();
+  const result = validateAIResponse({ findings: [finding(context)] }, context, {
+    maxFindings: 0,
+  });
+  assert.equal(result.findings.length, 0);
+  assert.equal(result.errors[0].path, 'limits.maxFindings');
+  assert.equal(result.errors[0].code, 'limit');
+});
+
 function createContext(): AIReviewContext {
   const content = 'function target() { return 1; }';
   const source: SourceDocument = {

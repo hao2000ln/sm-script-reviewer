@@ -68,8 +68,8 @@ export interface AIContextOmission {
 }
 
 export interface AIEstimatedUsage {
-  readonly contextCharacters: number;
-  readonly estimatedInputTokens: number;
+  readonly contextContentCharacters: number;
+  readonly estimatedContextTokens: number;
   readonly reservedOutputTokens: number;
   readonly estimation: 'character-approximation';
 }
@@ -103,6 +103,7 @@ export interface AIValidationError {
     | 'missing'
     | 'type'
     | 'enum'
+    | 'limit'
     | 'range'
     | 'source-identity'
     | 'evidence-reference';

@@ -9,6 +9,7 @@ import {
   type AIProviderRequest,
 } from '../src/ai/provider';
 import { applyAIRedactions, DEFAULT_AI_PRIVACY } from '../src/ai/privacy';
+import { estimateSerializedPayloadUsage } from '../src/ai/token-budget';
 import { analyze } from '../src/parser/analyze';
 import type { SourceDocument } from '../src/core/types';
 
@@ -71,6 +72,75 @@ test('provider gateway rejects contexts over configured request limits', async (
   );
 });
 
+test('provider gateway measures instructions and complete serialized payload overhead', async () => {
+  const base = createRequest(true);
+  const usage = estimateSerializedPayloadUsage(
+    base,
+    base.limits.estimatedCharactersPerToken,
+  );
+  assert.ok(usage.serializedCharacters > base.context.estimatedUsage.contextContentCharacters);
+  assert.equal(usage.estimation, 'character-approximation');
+
+  const oversizedInstructions = {
+    ...base,
+    trustedInstructions: 'x'.repeat(5_000),
+    limits: { ...base.limits, maxInputCharacters: 1_000, estimatedInputTokens: 10_000 },
+  };
+  const instructionProvider = new FakeAIProvider();
+  await assert.rejects(
+    requestAIReview(instructionProvider, oversizedInstructions),
+    (error: unknown) => error instanceof AIProviderError
+      && error.category === 'request-invalid',
+  );
+  assert.equal(instructionProvider.requests.length, 0);
+
+  const overheadProvider = new FakeAIProvider();
+  await assert.rejects(
+    requestAIReview(overheadProvider, {
+      ...base,
+      limits: {
+        ...base.limits,
+        maxInputCharacters: base.context.estimatedUsage.contextContentCharacters + 10,
+        estimatedInputTokens: 10_000,
+      },
+    }),
+    AIProviderError,
+  );
+  assert.equal(overheadProvider.requests.length, 0);
+});
+
+test('provider gateway rejects forged usage metadata and non-finite limits', async () => {
+  const base = createRequest(true);
+  const forged: AIProviderRequest = {
+    ...base,
+    context: {
+      ...base.context,
+      estimatedUsage: {
+        ...base.context.estimatedUsage,
+        contextContentCharacters: 0,
+        estimatedContextTokens: 0,
+      },
+    },
+    limits: { ...base.limits, maxInputCharacters: 200, estimatedInputTokens: 10_000 },
+  };
+  const provider = new FakeAIProvider();
+  await assert.rejects(
+    requestAIReview(provider, forged),
+    (error: unknown) => error instanceof AIProviderError
+      && error.category === 'request-invalid',
+  );
+  assert.equal(provider.requests.length, 0);
+
+  await assert.rejects(
+    requestAIReview(new FakeAIProvider(), {
+      ...base,
+      limits: { ...base.limits, reservedOutputTokens: Number.POSITIVE_INFINITY },
+    }),
+    (error: unknown) => error instanceof AIProviderError
+      && error.category === 'request-invalid',
+  );
+});
+
 test('privacy defaults disable AI and redaction hooks do not expose raw credentials', () => {
   assert.equal(DEFAULT_AI_PRIVACY.enabled, false);
   assert.equal(DEFAULT_AI_PRIVACY.sourceTransmissionApproved, false);
@@ -109,6 +179,7 @@ function createRequest(approved: boolean): AIProviderRequest {
       maxInputCharacters: 12_000,
       estimatedInputTokens: 3_000,
       reservedOutputTokens: 800,
+      estimatedCharactersPerToken: 4,
     },
     permission: { sourceTransmissionApproved: approved },
   };

@@ -51,3 +51,26 @@ export function effectiveContextCharacterLimit(budget: AITokenBudget): number {
 export function estimateInputTokens(characters: number, budget: AITokenBudget): number {
   return Math.ceil(characters / budget.estimatedCharactersPerToken);
 }
+
+export interface AISerializedPayloadUsage {
+  readonly serializedCharacters: number;
+  readonly estimatedInputTokens: number;
+  readonly estimation: 'character-approximation';
+}
+
+export function estimateSerializedPayloadUsage(
+  payload: unknown,
+  estimatedCharactersPerToken: number,
+): AISerializedPayloadUsage {
+  if (!Number.isFinite(estimatedCharactersPerToken) || estimatedCharactersPerToken <= 0) {
+    throw new Error('estimatedCharactersPerToken must be positive and finite');
+  }
+  const serialized = JSON.stringify(payload);
+  if (serialized === undefined) throw new Error('Request payload is not serializable');
+  const serializedCharacters = serialized.length;
+  return {
+    serializedCharacters,
+    estimatedInputTokens: Math.ceil(serializedCharacters / estimatedCharactersPerToken),
+    estimation: 'character-approximation',
+  };
+}

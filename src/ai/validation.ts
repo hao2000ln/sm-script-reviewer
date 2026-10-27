@@ -32,18 +32,57 @@ const VALIDATION_STATUSES = new Set<AIValidationStatus>([
   'rejected',
 ]);
 
-export function validateAIResponse(raw: unknown, context: AIReviewContext): AIValidationResult {
+export interface AIResponseValidationLimits {
+  readonly maxFindings: number;
+  readonly maxTextFieldCharacters: number;
+  readonly maxEvidenceReferences: number;
+}
+
+export const DEFAULT_AI_RESPONSE_VALIDATION_LIMITS: AIResponseValidationLimits = Object.freeze({
+  maxFindings: 50,
+  maxTextFieldCharacters: 8_000,
+  maxEvidenceReferences: 100,
+});
+
+export function validateAIResponse(
+  raw: unknown,
+  context: AIReviewContext,
+  overrides: Partial<AIResponseValidationLimits> = {},
+): AIValidationResult {
+  const limits = { ...DEFAULT_AI_RESPONSE_VALIDATION_LIMITS, ...overrides };
+  const invalidLimit = (Object.keys(limits) as (keyof AIResponseValidationLimits)[])
+    .find((field) => !Number.isInteger(limits[field]) || limits[field] <= 0);
+  if (invalidLimit) {
+    return {
+      findings: [],
+      errors: [{
+        path: `limits.${invalidLimit}`,
+        code: 'limit',
+        message: 'Validation limits must be positive integers',
+      }],
+    };
+  }
   if (!isRecord(raw) || !Array.isArray(raw.findings)) {
     return {
       findings: [],
       errors: [{ path: 'findings', code: 'type', message: 'Response findings must be an array' }],
     };
   }
+  if (raw.findings.length > limits.maxFindings) {
+    return {
+      findings: [],
+      errors: [{
+        path: 'findings',
+        code: 'limit',
+        message: `Response exceeds the maximum finding count of ${limits.maxFindings}`,
+      }],
+    };
+  }
 
   const findings: AIFinding[] = [];
   const errors: AIValidationError[] = [];
   for (const [index, candidate] of raw.findings.entries()) {
-    const result = validateFinding(candidate, context, `findings[${index}]`);
+    const result = validateFinding(candidate, context, limits, `findings[${index}]`);
     errors.push(...result.errors);
     if (result.finding) findings.push(result.finding);
   }
@@ -53,6 +92,7 @@ export function validateAIResponse(raw: unknown, context: AIReviewContext): AIVa
 function validateFinding(
   raw: unknown,
   context: AIReviewContext,
+  limits: AIResponseValidationLimits,
   path: string,
 ): { finding?: AIFinding; errors: AIValidationError[] } {
   if (!isRecord(raw)) {
@@ -70,6 +110,12 @@ function validateFinding(
   for (const field of stringFields) {
     if (typeof raw[field] !== 'string' || raw[field].length === 0) {
       errors.push({ path: `${path}.${field}`, code: 'type', message: `${field} must be a non-empty string` });
+    } else if (raw[field].length > limits.maxTextFieldCharacters) {
+      errors.push({
+        path: `${path}.${field}`,
+        code: 'limit',
+        message: `${field} exceeds the configured text length limit`,
+      });
     }
   }
 
@@ -124,13 +170,27 @@ function validateFinding(
       code: 'type',
       message: 'evidenceReferences must be a non-empty array of strings',
     });
+  } else if (raw.evidenceReferences.length > limits.maxEvidenceReferences) {
+    errors.push({
+      path: `${path}.evidenceReferences`,
+      code: 'limit',
+      message: 'evidenceReferences exceeds the configured item limit',
+    });
   } else {
     for (const [referenceIndex, reference] of raw.evidenceReferences.entries()) {
+      if (reference.length > limits.maxTextFieldCharacters) {
+        errors.push({
+          path: `${path}.evidenceReferences[${referenceIndex}]`,
+          code: 'limit',
+          message: 'Evidence reference exceeds the configured text length limit',
+        });
+        continue;
+      }
       if (!evidenceIds.has(reference)) {
         errors.push({
           path: `${path}.evidenceReferences[${referenceIndex}]`,
           code: 'evidence-reference',
-          message: `Unknown evidence reference: ${reference}`,
+          message: 'Evidence reference is not present in the supplied context',
         });
       }
     }
@@ -145,6 +205,15 @@ function validateFinding(
       path: `${path}.model`,
       code: 'type',
       message: 'model must contain non-empty providerId and modelId strings',
+    });
+  } else if (
+    raw.model.providerId.length > limits.maxTextFieldCharacters
+    || raw.model.modelId.length > limits.maxTextFieldCharacters
+  ) {
+    errors.push({
+      path: `${path}.model`,
+      code: 'limit',
+      message: 'model identifiers exceed the configured text length limit',
     });
   }
 
@@ -204,7 +273,7 @@ function validateEnum<T extends string>(
   errors: AIValidationError[],
 ): void {
   if (typeof value !== 'string' || !allowed.has(value as T)) {
-    errors.push({ path, code: 'enum', message: `Unsupported value: ${String(value)}` });
+    errors.push({ path, code: 'enum', message: 'Value is not in the allowed enum set' });
   }
 }
 

@@ -40,11 +40,13 @@ export function buildAIReviewContext(input: AIContextBuildInput): AIContextBuild
   if (input.analysis.source.id !== input.source.id || input.analysis.source.hash !== input.source.hash) {
     return failure('source', 'source-identity', 'AnalysisResult does not belong to the supplied source');
   }
+  const findingErrors = validateStaticFindings(input.findings, input.source);
+  if (findingErrors.length > 0) return { ok: false, errors: findingErrors };
 
   const selection = selectTarget(input);
   if (!selection.ok) return selection;
   const { range: targetRange, targetFunction, kind } = selection;
-  const rangeError = validateRange(targetRange, input.source.content);
+  const rangeError = validateRange(targetRange, input.source.content, 'target.range');
   if (rangeError) return { ok: false, errors: [rangeError] };
 
   let budget: AITokenBudget;
@@ -204,8 +206,8 @@ export function buildAIReviewContext(input: AIContextBuildInput): AIContextBuild
       ],
       omissions,
       estimatedUsage: {
-        contextCharacters,
-        estimatedInputTokens: estimateInputTokens(contextCharacters, budget),
+        contextContentCharacters: contextCharacters,
+        estimatedContextTokens: estimateInputTokens(contextCharacters, budget),
         reservedOutputTokens: budget.reservedOutputTokenBudget,
         estimation: 'character-approximation',
       },
@@ -283,14 +285,41 @@ function selectFunctions(
   }));
 }
 
-function validateRange(range: SourceRange, source: string): AIValidationError | undefined {
+function validateStaticFindings(
+  findings: readonly Finding[],
+  source: SourceDocument,
+): AIValidationError[] {
+  const errors: AIValidationError[] = [];
+  for (const [index, finding] of findings.entries()) {
+    if (finding.sourceId !== source.id) {
+      errors.push({
+        path: `findings[${index}].sourceId`,
+        code: 'source-identity',
+        message: 'Static finding does not belong to the supplied source',
+      });
+    }
+    const rangeError = validateRange(
+      finding.range,
+      source.content,
+      `findings[${index}].range`,
+    );
+    if (rangeError) errors.push(rangeError);
+  }
+  return errors;
+}
+
+function validateRange(
+  range: SourceRange,
+  source: string,
+  path: string,
+): AIValidationError | undefined {
   if (
     range.start.offset < 0
     || range.end.offset < range.start.offset
     || range.end.offset > source.length
   ) {
     return {
-      path: 'target.range',
+      path,
       code: 'range',
       message: 'Target offsets must be ordered and inside the supplied source',
     };
@@ -298,7 +327,7 @@ function validateRange(range: SourceRange, source: string): AIValidationError | 
   const expected = rangeFromOffsets(source, range.start.offset, range.end.offset);
   if (!sameLocation(range.start, expected.start) || !sameLocation(range.end, expected.end)) {
     return {
-      path: 'target.range',
+      path,
       code: 'range',
       message: 'Target line and column values do not match its UTF-16 offsets',
     };
