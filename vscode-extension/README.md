@@ -14,7 +14,7 @@ executes the document text and never changes ScriptLibrary source automatically.
 - Provides hover details with suggestions and available evidence.
 - Optionally reviews supported documents on save.
 
-AI review is deferred to Sprint 5B. Offline static review needs no API key.
+AI review is optional and disabled by default. Offline static review needs no API key.
 
 ## Local development and F5
 
@@ -38,6 +38,23 @@ then run **SM Reviewer: Review Current File** from the Command Palette.
   it clears the extension's stale diagnostics.
 
 ## Manual UAT
+
+## AI review setup and privacy
+
+- Command: **SM Reviewer: AI Review Current File** (`smReviewer.aiReviewCurrentFile`).
+- Store a credential only with **SM Reviewer: Set AI API Key**; remove it with
+  **SM Reviewer: Clear AI API Key**. Keys use VS Code Secret Storage, never the
+  CLI `.env`, workspace settings, reports, or extension logs.
+- Configure `smReviewer.ai.enabled` (default `false`), `smReviewer.ai.model`,
+  `smReviewer.ai.endpoint`, and `smReviewer.ai.timeoutMs` (default `30000`).
+- Every manually invoked AI request shows the endpoint hostname and requires
+  source-transmission consent. Cancel sends no source. AI never runs on save.
+- AI findings appear separately under source **SM Reviewer AI**. They are
+  model-generated, locally validated suggestions; static diagnostics remain the
+  deterministic baseline. A `partial` coverage status means only one function
+  context was reviewed in this MVP.
+- Remote endpoints must use HTTPS. Use localhost mocks for automated/UAT work;
+  production API verification is blocked by `credit_balance_exhausted`.
 
 1. Open a `.js` file containing `print("debug")`; run the command and confirm
    `SM-DBG-001` is displayed at the matching source range.

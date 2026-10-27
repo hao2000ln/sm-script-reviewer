@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import { OpenAICompatibleProvider } from '../../src/ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../../src/rules/builtin';
 import type { FindingEvidence } from '../../src/rules/types';
+import { reviewAIInMemoryDocument, type AIReviewDiagnosticData } from './ai-review-adapter';
 import {
   isSupportedDocument,
   reviewInMemoryDocument,
@@ -12,13 +14,20 @@ import {
 import { ReviewLifecycle, shouldReviewOnSave } from './review-lifecycle';
 
 const DIAGNOSTIC_SOURCE = 'SM Reviewer';
+const AI_DIAGNOSTIC_SOURCE = 'SM Reviewer AI';
+const AI_API_KEY_SECRET = 'smReviewer.ai.apiKey';
 const ruleRegistry = createBuiltinRuleRegistry();
 
 export function activate(context: vscode.ExtensionContext): void {
-  const controller = new ExtensionReviewController(vscode);
+  const controller = new ExtensionReviewController(vscode, context.secrets);
   context.subscriptions.push(
     controller.collection,
+    controller.aiCollection,
+    controller.output,
     vscode.commands.registerCommand('smReviewer.reviewCurrentFile', () => controller.reviewActiveDocument()),
+    vscode.commands.registerCommand('smReviewer.aiReviewCurrentFile', () => controller.aiReviewActiveDocument()),
+    vscode.commands.registerCommand('smReviewer.setAiApiKey', () => controller.setAiApiKey()),
+    vscode.commands.registerCommand('smReviewer.clearAiApiKey', () => controller.clearAiApiKey()),
     vscode.languages.registerHoverProvider([{ language: 'javascript' }, { pattern: '**/*.txt' }], controller),
     vscode.workspace.onDidSaveTextDocument((document) => void controller.reviewOnSave(document)),
     vscode.workspace.onDidCloseTextDocument((document) => controller.clear(document.uri)),
@@ -30,11 +39,20 @@ export function deactivate(): void {}
 
 class ExtensionReviewController implements vscode.HoverProvider {
   readonly collection: vscode.DiagnosticCollection;
+  readonly aiCollection: vscode.DiagnosticCollection;
+  readonly output: vscode.OutputChannel;
   readonly #lifecycle = new ReviewLifecycle();
+  readonly #aiLifecycle = new ReviewLifecycle();
+  readonly #aiControllers = new Map<string, AbortController>();
   readonly #presentations = new Map<string, readonly ReviewDiagnosticData[]>();
 
-  constructor(private readonly api: typeof vscode) {
+  constructor(
+    private readonly api: typeof vscode,
+    private readonly secrets: vscode.SecretStorage,
+  ) {
     this.collection = api.languages.createDiagnosticCollection('smReviewer');
+    this.aiCollection = api.languages.createDiagnosticCollection('smReviewerAI');
+    this.output = api.window.createOutputChannel('SM Reviewer AI');
   }
 
   async reviewActiveDocument(): Promise<void> {
@@ -44,6 +62,76 @@ class ExtensionReviewController implements vscode.HoverProvider {
       return;
     }
     await this.reviewDocument(document, true);
+  }
+
+  async aiReviewActiveDocument(): Promise<void> {
+    const document = this.api.window.activeTextEditor?.document;
+    if (!document) {
+      void this.api.window.showInformationMessage('SM Reviewer AI: no active document to review.');
+      return;
+    }
+    if (!isSupportedDocument({ fileName: document.fileName, languageId: document.languageId })) {
+      void this.api.window.showInformationMessage(
+        'SM Reviewer AI supports JavaScript (.js) and ScriptLibrary text (.txt) documents only.',
+      );
+      return;
+    }
+    if (!this.setting<boolean>('ai.enabled')) {
+      void this.api.window.showInformationMessage(
+        'SM Reviewer AI is disabled. Enable smReviewer.ai.enabled before requesting an AI review.',
+      );
+      return;
+    }
+
+    const apiKey = await this.secrets.get(AI_API_KEY_SECRET);
+    if (!apiKey) {
+      void this.api.window.showErrorMessage('SM Reviewer AI: no API key is stored. Run “SM Reviewer: Set AI API Key”.');
+      return;
+    }
+    const endpoint = this.setting<string>('ai.endpoint');
+    const modelId = this.setting<string>('ai.model');
+    const timeoutMs = this.setting<number>('ai.timeoutMs');
+    let provider: OpenAICompatibleProvider;
+    let hostname: string;
+    try {
+      hostname = new URL(endpoint).hostname;
+      provider = new OpenAICompatibleProvider({ endpoint, apiKey });
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('AI timeout must be positive');
+    } catch {
+      void this.api.window.showErrorMessage('SM Reviewer AI: endpoint, API key, or timeout configuration is invalid.');
+      return;
+    }
+
+    const consent = await this.api.window.showWarningMessage(
+      `SM Reviewer AI will send the current document source to ${hostname}. Source content leaves this machine.`,
+      { modal: true },
+      'Send source',
+    );
+    if (consent !== 'Send source') {
+      this.reportAIStatus('AI review cancelled before source transmission.');
+      return;
+    }
+
+    // Preserve deterministic static diagnostics even when the AI request fails.
+    await this.reviewDocument(document, false);
+    await this.reviewAIDocument(document, provider, modelId, timeoutMs);
+  }
+
+  async setAiApiKey(): Promise<void> {
+    const value = await this.api.window.showInputBox({
+      prompt: 'Store an API key in VS Code Secret Storage',
+      password: true,
+      ignoreFocusOut: true,
+      validateInput: (candidate) => candidate.trim() ? undefined : 'An API key is required.',
+    });
+    if (value === undefined) return;
+    await this.secrets.store(AI_API_KEY_SECRET, value.trim());
+    void this.api.window.showInformationMessage('SM Reviewer AI: API key stored in VS Code Secret Storage.');
+  }
+
+  async clearAiApiKey(): Promise<void> {
+    await this.secrets.delete(AI_API_KEY_SECRET);
+    void this.api.window.showInformationMessage('SM Reviewer AI: stored API key cleared.');
   }
 
   async reviewOnSave(document: vscode.TextDocument): Promise<void> {
@@ -58,15 +146,21 @@ class ExtensionReviewController implements vscode.HoverProvider {
     this.#lifecycle.clear(uri.toString());
     this.#presentations.delete(uri.toString());
     this.collection.delete(uri);
+    this.clearAI(uri);
   }
 
   handleConfigurationChange(event: vscode.ConfigurationChangeEvent): void {
-    if (!event.affectsConfiguration('smReviewer.enableDiagnostics')) return;
-    if (!this.setting<boolean>('enableDiagnostics')) {
+    const diagnosticsChanged = event.affectsConfiguration('smReviewer.enableDiagnostics');
+    const aiEnabledChanged = event.affectsConfiguration('smReviewer.ai.enabled');
+    if (!diagnosticsChanged && !aiEnabledChanged) return;
+    if (diagnosticsChanged && !this.setting<boolean>('enableDiagnostics')) {
       this.#lifecycle.clearAll();
       this.#presentations.clear();
       this.collection.clear();
+      this.clearAllAI();
+      return;
     }
+    if (aiEnabledChanged && !this.setting<boolean>('ai.enabled')) this.clearAllAI();
   }
 
   provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.Hover | undefined {
@@ -109,6 +203,62 @@ class ExtensionReviewController implements vscode.HoverProvider {
     }
   }
 
+  private async reviewAIDocument(
+    document: vscode.TextDocument,
+    provider: OpenAICompatibleProvider,
+    modelId: string,
+    timeoutMs: number,
+  ): Promise<void> {
+    const input = {
+      uri: document.uri.toString(),
+      fileName: document.fileName,
+      languageId: document.languageId,
+      text: document.getText(),
+      version: document.version,
+    };
+    const key = input.uri;
+    this.clearAI(document.uri);
+    const token = this.#aiLifecycle.begin(key, input.version);
+    const controller = new AbortController();
+    this.#aiControllers.set(key, controller);
+    this.reportAIStatus('AI review started; source transmission was explicitly approved.');
+    let reviewed;
+    try {
+      reviewed = await reviewAIInMemoryDocument(input, {
+        enabled: true,
+        allowSourceTransmission: true,
+        provider,
+        modelId,
+        timeoutMs,
+        signal: controller.signal,
+      });
+    } catch {
+      if (this.#aiLifecycle.isCurrent(token, document.version)) {
+        this.#aiControllers.delete(key);
+        this.reportAIStatus('AI review failed unexpectedly; static diagnostics were preserved.');
+        void this.api.window.showWarningMessage('SM Reviewer AI: review failed. Static diagnostics were preserved.');
+      }
+      return;
+    }
+    if (!this.#aiLifecycle.isCurrent(token, document.version)) return;
+    this.#aiControllers.delete(key);
+    if (!reviewed.supported) return;
+    if (reviewed.ai.errors.length > 0) {
+      this.reportAIStatus(`AI review failed: ${reviewed.ai.errors.map(({ category }) => category).join(', ')}.`);
+      void this.api.window.showWarningMessage('SM Reviewer AI: review did not complete. Static diagnostics were preserved.');
+      return;
+    }
+    if (this.setting<boolean>('enableDiagnostics') && this.setting<boolean>('ai.enabled')) {
+      this.aiCollection.set(document.uri, reviewed.diagnostics.map((item) => toVsCodeAIDiagnostic(this.api, document.uri, item)));
+    }
+    const coverage = reviewed.ai.coverage[0];
+    this.reportAIStatus(
+      `AI review complete: ${reviewed.diagnostics.length} finding(s); coverage ${coverage?.status ?? 'not-run'} `
+      + `(${coverage?.selectedForAIReview ?? 0}/${coverage?.totalIndexedFunctions ?? 0} function(s) selected).`,
+    );
+    void this.api.window.showInformationMessage(`SM Reviewer AI: ${reviewed.diagnostics.length} model-generated diagnostic(s).`);
+  }
+
   private publish(uri: vscode.Uri, reviewed: Extract<InMemoryReviewResult, { supported: true }>): void {
     if (!this.setting<boolean>('enableDiagnostics')) {
       this.clear(uri);
@@ -116,6 +266,25 @@ class ExtensionReviewController implements vscode.HoverProvider {
     }
     this.#presentations.set(uri.toString(), reviewed.diagnostics);
     this.collection.set(uri, reviewed.diagnostics.map((item) => toVsCodeDiagnostic(this.api, uri, item)));
+  }
+
+  private clearAI(uri: vscode.Uri): void {
+    const key = uri.toString();
+    this.#aiLifecycle.clear(key);
+    this.#aiControllers.get(key)?.abort('document-invalidated');
+    this.#aiControllers.delete(key);
+    this.aiCollection.delete(uri);
+  }
+
+  private clearAllAI(): void {
+    this.#aiLifecycle.clearAll();
+    for (const controller of this.#aiControllers.values()) controller.abort('diagnostics-disabled');
+    this.#aiControllers.clear();
+    this.aiCollection.clear();
+  }
+
+  private reportAIStatus(message: string): void {
+    this.output.appendLine(`SM Reviewer AI: ${message}`);
   }
 
   private setting<T>(name: string): T {
@@ -143,6 +312,35 @@ function toVsCodeDiagnostic(
     new api.Location(uri, toVsCodeRange(api, toEditorEvidenceRange(evidence))),
     evidence.message,
   ));
+  return diagnostic;
+}
+
+function toVsCodeAIDiagnostic(
+  api: typeof vscode,
+  uri: vscode.Uri,
+  item: AIReviewDiagnosticData,
+): vscode.Diagnostic {
+  const diagnostic = new api.Diagnostic(
+    toVsCodeRange(api, item.range),
+    item.message,
+    item.severity === 'error'
+      ? api.DiagnosticSeverity.Error
+      : item.severity === 'warning'
+        ? api.DiagnosticSeverity.Warning
+        : api.DiagnosticSeverity.Information,
+  );
+  diagnostic.code = item.code;
+  diagnostic.source = AI_DIAGNOSTIC_SOURCE;
+  diagnostic.relatedInformation = [
+    new api.DiagnosticRelatedInformation(
+      new api.Location(uri, toVsCodeRange(api, item.range)),
+      `Validation: ${item.validationStatus}; suggestion: ${item.suggestion}`,
+    ),
+    ...item.evidenceReferences.map((reference) => new api.DiagnosticRelatedInformation(
+      new api.Location(uri, toVsCodeRange(api, item.range)),
+      `AI evidence reference: ${reference}`,
+    )),
+  ];
   return diagnostic;
 }
 

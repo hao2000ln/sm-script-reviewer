@@ -36,8 +36,8 @@ npm run review -- review ./examples --format html --output review.html
   validated model-generated findings separate from static findings.
 
 ## Not yet implemented
-- RAG/knowledge base, multiple AI provider adapters, VS Code extension, SM
-  Connector, interprocedural SM analysis, and unverified custom SM APIs.
+- RAG/knowledge base, multiple AI provider adapters, SM Connector,
+  interprocedural SM analysis, and unverified custom SM APIs.
 - Mandatory SCFile `doClose()` analysis; no verified lifecycle contract has
   been accepted for that method.
 - Validate against real SM ScriptLibrary samples before treating parser coverage as complete.

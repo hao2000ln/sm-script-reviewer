@@ -1,20 +1,32 @@
 {
   "name": "sm-scriptlibrary-reviewer",
   "displayName": "SM ScriptLibrary Reviewer",
-  "description": "Read-only static review for OpenText/HPE Service Manager ScriptLibrary source.",
+  "description": "Read-only static and explicitly consented AI review for OpenText/HPE Service Manager ScriptLibrary source.",
   "version": "0.1.0",
   "publisher": "hao2000ln",
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": ["Linters"],
-  "activationEvents": ["onCommand:smReviewer.reviewCurrentFile", "onStartupFinished"],
+  "activationEvents": ["onCommand:smReviewer.reviewCurrentFile", "onCommand:smReviewer.aiReviewCurrentFile", "onCommand:smReviewer.setAiApiKey", "onCommand:smReviewer.clearAiApiKey", "onStartupFinished"],
   "main": "./dist/vscode-extension/src/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "smReviewer.reviewCurrentFile",
         "title": "SM Reviewer: Review Current File"
+      },
+      {
+        "command": "smReviewer.aiReviewCurrentFile",
+        "title": "SM Reviewer: AI Review Current File"
+      },
+      {
+        "command": "smReviewer.setAiApiKey",
+        "title": "SM Reviewer: Set AI API Key"
+      },
+      {
+        "command": "smReviewer.clearAiApiKey",
+        "title": "SM Reviewer: Clear AI API Key"
       }
     ],
     "configuration": {
@@ -29,6 +41,27 @@
           "type": "boolean",
           "default": true,
           "description": "Show SM Reviewer diagnostics in the editor."
+        },
+        "smReviewer.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow explicitly invoked AI review. Source transmission still requires confirmation for every review."
+        },
+        "smReviewer.ai.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Model identifier sent to the configured OpenAI-compatible endpoint."
+        },
+        "smReviewer.ai.endpoint": {
+          "type": "string",
+          "default": "https://api.openai.com/v1/chat/completions",
+          "description": "OpenAI-compatible chat-completions endpoint. Remote endpoints must use HTTPS."
+        },
+        "smReviewer.ai.timeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1,
+          "description": "Maximum time in milliseconds for an explicitly invoked AI request."
         }
       }
     }
