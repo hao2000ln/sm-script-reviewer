@@ -1,5 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { runAIReview } from '../ai/orchestrator';
+import { OpenAICompatibleProvider } from '../ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../rules/builtin';
 import type { RuleSetConfig, RuleSeverity } from '../rules/types';
 import { reviewTarget } from '../reviewer/batch';
@@ -17,10 +19,18 @@ interface ReviewCommandOptions {
   readonly minSeverity: RuleSeverity;
   readonly ruleIds: readonly string[];
   readonly excludedPatterns: readonly string[];
+  readonly ai: boolean;
+  readonly allowSourceTransmission: boolean;
+  readonly aiModel: string;
+  readonly aiEndpoint: string;
+  readonly aiTimeoutMs: number;
 }
 
 const CLI_SEVERITIES = new Set<RuleSeverity>(['info', 'warning', 'error']);
 const FORMATS = new Set<ReviewFormat>(['text', 'json', 'html']);
+const DEFAULT_AI_MODEL = 'gpt-4o-mini';
+const DEFAULT_AI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+const DEFAULT_AI_TIMEOUT_MS = 30_000;
 
 export const REVIEW_USAGE = `Usage: sm-review review <file-or-directory> [options]
 
@@ -31,6 +41,11 @@ Options:
   --min-severity info|warning|error Display and failure threshold (default: warning)
   --rule <rule-id>                  Include a rule in the report (repeatable)
   --exclude <glob>                  Exclude matching files (repeatable)
+  --ai                              Enable model-generated review
+  --allow-source-transmission       Consent to send source to the configured provider
+  --ai-model <model>                AI model ID (default: gpt-4o-mini)
+  --ai-endpoint <url>               OpenAI-compatible chat completions endpoint
+  --ai-timeout <milliseconds>       Positive request timeout (default: 30000)
   --help                            Show this help
 
 Exit codes: 0 clean, 1 findings at threshold, 2 invalid/incomplete review.`;
@@ -50,10 +65,12 @@ export async function runReviewCommand(target: string, args: readonly string[]):
     config,
     excludedPatterns: options.excludedPatterns,
   });
+  const ai = await createAIResult(batch, options);
   const report = createReviewReport(batch, {
     minSeverity: options.minSeverity,
     ruleIds: options.ruleIds.length > 0 ? options.ruleIds : undefined,
     inputPath: resolve(target),
+    ...(ai ? { ai } : {}),
   });
   const rendered = renderReport(report, options.format);
 
@@ -72,9 +89,22 @@ function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
   let minSeverity: RuleSeverity = 'warning';
   const ruleIds: string[] = [];
   const excludedPatterns: string[] = [];
+  let ai = false;
+  let allowSourceTransmission = false;
+  let aiModel = DEFAULT_AI_MODEL;
+  let aiEndpoint = DEFAULT_AI_ENDPOINT;
+  let aiTimeoutMs = DEFAULT_AI_TIMEOUT_MS;
 
   for (let index = 0; index < args.length; index += 1) {
     const option = args[index];
+    if (option === '--ai') {
+      ai = true;
+      continue;
+    }
+    if (option === '--allow-source-transmission') {
+      allowSourceTransmission = true;
+      continue;
+    }
     const value = args[index + 1];
     if (!option.startsWith('--')) throw new CliInputError(`Unexpected argument: ${option}`);
     if (!value || value.startsWith('--')) throw new CliInputError(`Missing value for ${option}`);
@@ -103,12 +133,73 @@ function parseReviewOptions(args: readonly string[]): ReviewCommandOptions {
       case '--exclude':
         excludedPatterns.push(value);
         break;
+      case '--ai-model':
+        if (!value.trim()) throw new CliInputError('AI model must not be empty');
+        aiModel = value;
+        break;
+      case '--ai-endpoint':
+        aiEndpoint = value;
+        break;
+      case '--ai-timeout': {
+        const parsed = Number(value);
+        if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+          throw new CliInputError('AI timeout must be a positive integer');
+        }
+        aiTimeoutMs = parsed;
+        break;
+      }
       default:
         throw new CliInputError(`Unknown option: ${option}`);
     }
   }
 
-  return { format, output, config, minSeverity, ruleIds, excludedPatterns };
+  return {
+    format,
+    output,
+    config,
+    minSeverity,
+    ruleIds,
+    excludedPatterns,
+    ai,
+    allowSourceTransmission,
+    aiModel,
+    aiEndpoint,
+    aiTimeoutMs,
+  };
+}
+
+async function createAIResult(
+  batch: Awaited<ReturnType<typeof reviewTarget>>,
+  options: ReviewCommandOptions,
+) {
+  if (!options.ai) return undefined;
+  if (!options.allowSourceTransmission) {
+    return runAIReview(batch, {
+      enabled: true,
+      allowSourceTransmission: false,
+      modelId: options.aiModel,
+      timeoutMs: options.aiTimeoutMs,
+    });
+  }
+
+  let provider;
+  let providerConfigurationError: string | undefined;
+  try {
+    provider = new OpenAICompatibleProvider({
+      endpoint: options.aiEndpoint,
+      apiKey: process.env.SM_REVIEWER_AI_API_KEY ?? '',
+    });
+  } catch (error) {
+    providerConfigurationError = errorMessage(error);
+  }
+  return runAIReview(batch, {
+    enabled: true,
+    allowSourceTransmission: true,
+    provider,
+    providerConfigurationError,
+    modelId: options.aiModel,
+    timeoutMs: options.aiTimeoutMs,
+  });
 }
 
 function validateRuleFilters(ruleIds: readonly string[]): void {

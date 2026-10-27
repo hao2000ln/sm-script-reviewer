@@ -19,6 +19,25 @@ export function renderHtmlReport(report: ReviewReport): string {
       ${escapeHtml(diagnostic.message)}</li>`).join('');
   const failures = report.failures.map((failure) => `
     <li><code>${escapeHtml(failure.filePath)}</code> ${escapeHtml(failure.message)}</li>`).join('');
+  const aiFindings = (report.aiFindings ?? []).map((finding) => `
+    <article class="finding ai-finding" data-severity="${escapeHtml(finding.severity)}" data-rule="ai">
+      <header><span class="severity">${escapeHtml(finding.severity)}</span>
+        <strong>AI finding — model-generated</strong>
+        <code>${escapeHtml(finding.filePath)}:${finding.range.start.line}:${finding.range.start.column}</code></header>
+      <p>${escapeHtml(finding.message)}</p>
+      <p><strong>Explanation:</strong> ${escapeHtml(finding.explanation)}</p>
+      ${finding.suggestion ? `<p><strong>Suggestion:</strong> ${escapeHtml(finding.suggestion)}</p>` : ''}
+      <p><small>Model: ${escapeHtml(finding.model.providerId)}/${escapeHtml(finding.model.modelId)}; confidence: ${finding.confidence}</small></p>
+    </article>`).join('');
+  const aiErrors = (report.aiErrors ?? []).map((error) => `
+    <li><code>${escapeHtml(error.filePath)}</code> ${escapeHtml(error.category)}: ${escapeHtml(error.message)}</li>`).join('');
+  const aiCoverage = (report.aiCoverage ?? []).map((coverage) => `
+    <li><code>${escapeHtml(coverage.filePath)}</code> status=${escapeHtml(coverage.status)},
+      selected=${coverage.selectedForAIReview}/${coverage.totalIndexedFunctions},
+      not reviewed=${coverage.notReviewedFunctions}
+      ${coverage.status === 'partial'
+        ? '<strong class="coverage-warning">Warning: this ScriptLibrary was not fully AI-reviewed.</strong>'
+        : ''}</li>`).join('');
 
   return `<!doctype html>
 <html lang="en">
@@ -34,6 +53,7 @@ export function renderHtmlReport(report: ReviewReport): string {
     .filters label { margin-right: 16px; }
     .finding header { display: flex; gap: 10px; align-items: baseline; }
     .severity { font-weight: 700; text-transform: uppercase; }
+    .coverage-warning { display: block; color: #b45309; }
     code { overflow-wrap: anywhere; }
     .hidden { display: none; }
   </style>
@@ -44,6 +64,7 @@ export function renderHtmlReport(report: ReviewReport): string {
     <span>Files: ${report.summary.files}</span><span>Findings: ${report.summary.findings}</span>
     <span>Diagnostics: ${report.summary.diagnostics}</span><span>Failures: ${report.summary.failures}</span>
     <span>Skipped files: ${report.summary.skippedFiles}</span>
+    ${report.aiFindings ? `<span>AI findings: ${report.summary.aiFindings}</span><span>AI errors: ${report.summary.aiErrors}</span>` : ''}
     <span>Threshold: ${escapeHtml(report.failureThreshold)}</span>
   </div>
   <div class="filters">
@@ -56,6 +77,9 @@ export function renderHtmlReport(report: ReviewReport): string {
     </select></label>
   </div>
   <main>${groups || '<p>No findings meeting the failure threshold.</p>'}</main>
+  ${report.aiFindings ? `<section><h2>AI review (model-generated)</h2>${aiFindings || '<p>No AI findings.</p>'}</section>` : ''}
+  ${report.aiCoverage ? `<section><h2>AI review coverage</h2><ul>${aiCoverage}</ul></section>` : ''}
+  ${aiErrors ? `<section><h2>AI errors</h2><ul>${aiErrors}</ul></section>` : ''}
   ${diagnostics ? `<section><h2>Parse diagnostics</h2><ul>${diagnostics}</ul></section>` : ''}
   ${failures ? `<section><h2>File failures</h2><ul>${failures}</ul></section>` : ''}
   <script>
