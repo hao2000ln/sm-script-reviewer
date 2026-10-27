@@ -145,6 +145,12 @@ Project scope, roadmap, and collaboration rules are recorded in
 
 ## Delivery status
 
+The VS Code extension can be packaged locally as a standalone VSIX; archive
+inspection and offline mock UAT are documented in
+[`uat/sprint5c/README.md`](uat/sprint5c/README.md). Normal-VS-Code installation
+UAT and real-provider UAT remain manual/pending; the latter is blocked by
+`credit_balance_exhausted`.
+
 Current sprint scope and delivery status are maintained in
 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md). Treat roadmap entries as plans;
 inspect source, tests, and the relevant pull request before concluding that a

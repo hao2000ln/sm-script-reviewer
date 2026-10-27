@@ -4,11 +4,27 @@
   "description": "Read-only static and explicitly consented AI review for OpenText/HPE Service Manager ScriptLibrary source.",
   "version": "0.1.0",
   "publisher": "hao2000ln",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hao2000ln/sm-script-reviewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hao2000ln/sm-script-reviewer/issues"
+  },
+  "homepage": "https://github.com/hao2000ln/sm-script-reviewer#readme",
   "engines": {
     "vscode": "^1.95.0"
   },
-  "categories": ["Linters"],
-  "activationEvents": ["onCommand:smReviewer.reviewCurrentFile", "onCommand:smReviewer.aiReviewCurrentFile", "onCommand:smReviewer.setAiApiKey", "onCommand:smReviewer.clearAiApiKey", "onStartupFinished"],
+  "categories": [
+    "Linters"
+  ],
+  "activationEvents": [
+    "onCommand:smReviewer.reviewCurrentFile",
+    "onCommand:smReviewer.aiReviewCurrentFile",
+    "onCommand:smReviewer.setAiApiKey",
+    "onCommand:smReviewer.clearAiApiKey",
+    "onStartupFinished"
+  ],
   "main": "./dist/vscode-extension/src/extension.js",
   "contributes": {
     "commands": [
@@ -69,13 +85,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/vscode-extension/tests/*.test.js",
-    "package": "npx @vscode/vsce package"
+    "prepare:package": "npm run build && node scripts/prepare-package.cjs",
+    "package": "npm run prepare:package && vsce package --out sm-scriptlibrary-reviewer-0.1.0.vsix",
+    "inspect:vsix": "node ../uat/sprint5c/inspect-vsix.cjs sm-scriptlibrary-reviewer-0.1.0.vsix"
   },
   "dependencies": {
     "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/vscode": "^1.95.0"
+    "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "^4.0.0"
   }
 }

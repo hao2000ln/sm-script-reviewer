@@ -70,17 +70,29 @@ then run **SM Reviewer: Review Current File** from the Command Palette.
 
 ## Packaging
 
-After building, install or invoke the VS Code extension packager:
+Prerequisites: VS Code `^1.95.0`, Node.js compatible with the lockfile, and
+Git Bash or another terminal with `npm`. Build a deterministic local package:
 
 ```bash
 cd vscode-extension
-npm install
+npm ci
 npm run build
-npx @vscode/vsce package --out sm-scriptlibrary-reviewer.vsix
+npm test
+npm run package
+npm run inspect:vsix
 ```
 
-Install the resulting VSIX with VS Code's **Extensions: Install from VSIX...**
-command. Packaging should be done only after independent review.
+The resulting artifact is `sm-scriptlibrary-reviewer-0.1.0.vsix`. Install it in
+a normal VS Code instance with **Extensions: Install from VSIX...**, then reload
+when prompted. The package is standalone: it contains compiled extension/core
+modules and the TypeScript Compiler API runtime, but excludes TypeScript source,
+tests, UAT fixtures, `.env`, and developer settings. See
+[`../uat/sprint5c/README.md`](../uat/sprint5c/README.md) for release UAT,
+troubleshooting, uninstall, and the local Mock AI workflow.
+
+No license metadata is declared because the project owner has not approved a
+license. Do not publish to Marketplace or create a release until ownership,
+license, and independent review are complete.
 
 ## Known limitations
 

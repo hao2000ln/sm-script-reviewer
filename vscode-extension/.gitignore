@@ -1,0 +1,3 @@
+# Local release artifact; distribution is owner-controlled and must not be
+# committed automatically by the packaging workflow.
+*.vsix

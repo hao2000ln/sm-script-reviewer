@@ -1,0 +1,14 @@
+# Package only the compiled extension, its runtime TypeScript dependency, and
+# VS Code manifest/documentation files. This prevents accidental inclusion of
+# tests, local fixtures, .env files, source TypeScript, and developer settings.
+**/*
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!LICENSE.*
+!dist/**
+!node_modules/typescript/**
+
+# TypeScript emits extension tests under dist; they are not runtime code.
+dist/vscode-extension/tests/**
