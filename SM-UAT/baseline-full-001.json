@@ -1,0 +1,3439 @@
+{
+  "schemaVersion": "1.1.0",
+  "generatedAt": "2026-10-28T07:13:22.433Z",
+  "targetPath": "SM-Exports/ScriptLibrary",
+  "provenance": {
+    "profile": "full",
+    "relativeCorpusRoot": "SM-Exports/ScriptLibrary",
+    "appliedExclusions": [],
+    "reviewedFileCount": 13,
+    "skippedFileCount": 0,
+    "sourceHash": "0a4febd67d75f5aa1d9a9358b8457c48dbfa8940b8c33c729abc645f5cc932dc",
+    "ruleConfigurationHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "toolVersion": "0.1.0",
+    "includedUnknownDirectories": []
+  },
+  "files": [
+    {
+      "relativeFilePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "sourceHash": "7510b6cdbdc6ea156027bcd999871c3105ee3e0f3f49fc6d1ae4f92e84b87be1",
+      "functionCount": 3,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "sourceHash": "8b706f09dc7a3ebe07c82c220bd6cb7e3271cf12f7f29649c2d5159a88814cd6",
+      "functionCount": 32,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "sourceHash": "66ae1c057f6c80a5201082adf0d4f0457eb3ccd950d6ee68bf7a0ab6fbbc0c95",
+      "functionCount": 10,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "sourceHash": "f620c37b3b4e5b52a49497d55ce3e2451edb5aa80ab6b86b05ab0d4f031e8dfb",
+      "functionCount": 2,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "sourceHash": "e2c6fb93eddfdd853dcada7f0ac0c60080a10e8b47ccf06098e736ee14611b65",
+      "functionCount": 5,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "sourceHash": "c9090d685014d1f61a474b2a5099a415a808dddee48ec08515036b7c588e3aaf",
+      "functionCount": 1,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_SHARED/ESD_SCHEDULE_Utils.js",
+      "sourceHash": "f073df760fda3b32921eb1c49b6322133d632aab952424864e4cf075ed51c85f",
+      "functionCount": 1,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_TEST/capquyenPQDL.js",
+      "sourceHash": "84c0f5787e19c68d0b988ffb1bb6b981063bfe6830a886007303332b3feaa52c",
+      "functionCount": 2,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "sourceHash": "86faf9984deffd8c2e17a42f6d1192e96f7664747c7012ae1562ec5a8d5d2c20",
+      "functionCount": 9,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "sourceHash": "ac194a1acb3e72e2043b0ab48b45c32bd2d99890a6c34a55e401ac3f6aa9ba1e",
+      "functionCount": 5,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "ESD_TEST/ESD_Validate_PCQ.js",
+      "sourceHash": "02d3197510a68eb42c7ecb33ce75896e278fc0992f334d464fbc937b3719dfdd",
+      "functionCount": 4,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "sourceHash": "90209210263865a5fa908d2cec7e27fa82aaa96db787b7718878ed52db4f183a",
+      "functionCount": 12,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    },
+    {
+      "relativeFilePath": "Tools/copy_duplicate_file.js",
+      "sourceHash": "600bceda192131dbaf60c5ca1eb4a85de5fa4d139920ae8e6688921a25fd14a4",
+      "functionCount": 5,
+      "parseDiagnosticCount": 0,
+      "skippedRuleCount": 2
+    }
+  ],
+  "findings": [
+    {
+      "message": "Function \"getConfigObj\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 20,
+          "column": 1,
+          "offset": 533
+        },
+        "end": {
+          "line": 30,
+          "column": 2,
+          "offset": 723
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 20,
+              "column": 1,
+              "offset": 533
+            },
+            "end": {
+              "line": 30,
+              "column": 2,
+              "offset": 723
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "7f48d2be5af9948a344a08469a0c6081478a861cf1cfec532c8d09f24c00c6ad",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "relativeFilePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "identity": "45056f1d8943b8ed3639b90da10a18e0b6e3f7d327bf0ed33e68a77cb529fd8e"
+    },
+    {
+      "message": "Function \"getENV\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 32,
+          "column": 1,
+          "offset": 727
+        },
+        "end": {
+          "line": 34,
+          "column": 2,
+          "offset": 772
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 32,
+              "column": 1,
+              "offset": 727
+            },
+            "end": {
+              "line": 34,
+              "column": 2,
+              "offset": 772
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "0481072fdc838ec3fdcbc534cf597eacacf598f3a3c6ade2bcfbbc3506c7aca7",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "relativeFilePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "identity": "f115ac3e4f00b4c4efb013be7fd33f16e5ca0d7844f5f7e1d2bac8b0b738178f"
+    },
+    {
+      "message": "Function \"authentication\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 36,
+          "column": 1,
+          "offset": 776
+        },
+        "end": {
+          "line": 38,
+          "column": 2,
+          "offset": 847
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 36,
+              "column": 1,
+              "offset": 776
+            },
+            "end": {
+              "line": 38,
+              "column": 2,
+              "offset": 847
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "ac951a9a84f1cbdc67c37a0f01aa5e45990cec0e010c1432e5703f1344c4ba88",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "relativeFilePath": "ESD_CONFIG/ESD_ENV_CONFIG.js",
+      "identity": "5882a012d061289934a50aa87be1b014c11fa86976a612ca200a5c10ec4ac0b4"
+    },
+    {
+      "message": "Function \"_validationHasOwn\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 6,
+          "column": 1,
+          "offset": 202
+        },
+        "end": {
+          "line": 8,
+          "column": 2,
+          "offset": 307
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 6,
+              "column": 1,
+              "offset": 202
+            },
+            "end": {
+              "line": 8,
+              "column": 2,
+              "offset": 307
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "271309fc1453f9cdcd68109e31a7db7f43dbf7780e451a09361ed8496c3596be",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "a1cf48ee32732bb247cd9cdcd0acb230052d7a7ea922ad939889c12ad0d84245"
+    },
+    {
+      "message": "Function \"_validationUnknownKey\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 10,
+          "column": 1,
+          "offset": 311
+        },
+        "end": {
+          "line": 16,
+          "column": 2,
+          "offset": 586
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 10,
+              "column": 1,
+              "offset": 311
+            },
+            "end": {
+              "line": 16,
+              "column": 2,
+              "offset": 586
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "df5192ae364ec054c3f2771ee21e4414a6b12ee7f80690066285ad55b0bc940b",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "e22e87aa1502c6ce6e7f21732dff6b001a8744a30bb0ce1de980f6a46cf5d246"
+    },
+    {
+      "message": "Function \"_validationUnknownOptionResult\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 18,
+          "column": 1,
+          "offset": 590
+        },
+        "end": {
+          "line": 27,
+          "column": 2,
+          "offset": 967
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 18,
+              "column": 1,
+              "offset": 590
+            },
+            "end": {
+              "line": 27,
+              "column": 2,
+              "offset": 967
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "4fd8a5d87390f8ed2bf30bd7f3f62d9f3a9317d16ed9ee9e0a187a687b52af59",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "7423a01e91b8935ce498f37017ec7ee310eece4f3822b16f22ee8d755f85dfe8"
+    },
+    {
+      "message": "Function \"_validationCheckKnownOptions\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 29,
+          "column": 1,
+          "offset": 971
+        },
+        "end": {
+          "line": 42,
+          "column": 2,
+          "offset": 1617
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 29,
+              "column": 1,
+              "offset": 971
+            },
+            "end": {
+              "line": 42,
+              "column": 2,
+              "offset": 1617
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "5ec62c936bd9509fe8a2885636cc8850dac2ebb2d955d396b5553639f26b90f2",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "7e8c16a6a09b714566623c54c1582cba3e708486995c0a131bb3fcfb647dbcd4"
+    },
+    {
+      "message": "Function \"_validationSmAdapter\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 44,
+          "column": 1,
+          "offset": 1621
+        },
+        "end": {
+          "line": 49,
+          "column": 2,
+          "offset": 1798
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 44,
+              "column": 1,
+              "offset": 1621
+            },
+            "end": {
+              "line": 49,
+              "column": 2,
+              "offset": 1798
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "b2686bfbead185678c1ec59b53fa4f389f6c9cfed72e6a5816e62d63f6c90d81",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "d7c1e6feb995d7ab0d5f024743fa71ee0ce66f902bfd63e688a685350d521e2a"
+    },
+    {
+      "message": "Function \"escapeRegExp\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 253,
+          "column": 3,
+          "offset": 9312
+        },
+        "end": {
+          "line": 255,
+          "column": 4,
+          "offset": 9403
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 253,
+              "column": 3,
+              "offset": 9312
+            },
+            "end": {
+              "line": 255,
+              "column": 4,
+              "offset": 9403
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "0137b529662e376a1a61f64bcb32eeeee9f2eab4d078d082f5a3f654798f7e5f",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "45787ab87ceccbb34d390c14d8e51bac41e811641bd27e1891e553f82b7a5a57"
+    },
+    {
+      "message": "Function \"_isUnsafeIntegerCanonical\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 348,
+          "column": 1,
+          "offset": 13532
+        },
+        "end": {
+          "line": 355,
+          "column": 2,
+          "offset": 13904
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 348,
+              "column": 1,
+              "offset": 13532
+            },
+            "end": {
+              "line": 355,
+              "column": 2,
+              "offset": 13904
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "edccabaa14bdbea771342b6f46628ed42fb803bcca9fac89c3544ab8bc7f6d73",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "f35c784d71776b5fc0c84e77f8290cf54b60f50b713bf3c26fe52a361cfac7a8"
+    },
+    {
+      "message": "Function \"decimalPlacesOf\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 462,
+          "column": 3,
+          "offset": 19420
+        },
+        "end": {
+          "line": 470,
+          "column": 4,
+          "offset": 19867
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 462,
+              "column": 3,
+              "offset": 19420
+            },
+            "end": {
+              "line": 470,
+              "column": 4,
+              "offset": 19867
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "478cb3db9cbfa138e234d2d2f8384776672b47b3ec937f6df3289ae859ff8d91",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "f09dd3e4d8ce6f8826b0785374a3cd81984347096e3ba1f71fa2b630520edff7"
+    },
+    {
+      "message": "Function \"_normalizeDateTimePrecision\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 895,
+          "column": 1,
+          "offset": 36078
+        },
+        "end": {
+          "line": 906,
+          "column": 2,
+          "offset": 36473
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 895,
+              "column": 1,
+              "offset": 36078
+            },
+            "end": {
+              "line": 906,
+              "column": 2,
+              "offset": 36473
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "2017f0449077d8357f0fc63c6320bfbc0215f18db215a408773727d1f2173285",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "0267a7ef7c22b84ecb015e56b73c8e2dcc8d35064760c1ae4cae711c745897b8"
+    },
+    {
+      "message": "Function \"_parseDateTimeText\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 908,
+          "column": 1,
+          "offset": 36477
+        },
+        "end": {
+          "line": 956,
+          "column": 2,
+          "offset": 38464
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 908,
+              "column": 1,
+              "offset": 36477
+            },
+            "end": {
+              "line": 956,
+              "column": 2,
+              "offset": 38464
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "90c5e3860c788747a7adc3fd9fe48f429a7e81df8b378455ece47cbd5af5a75e",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "19b1d61fe8a43ac2a6465987895381b3d0fba01369f88d7bb902d4084ea2efc0"
+    },
+    {
+      "message": "Function \"_readDateTimeValue\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 958,
+          "column": 1,
+          "offset": 38468
+        },
+        "end": {
+          "line": 999,
+          "column": 2,
+          "offset": 40317
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 958,
+              "column": 1,
+              "offset": 38468
+            },
+            "end": {
+              "line": 999,
+              "column": 2,
+              "offset": 40317
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "45ba062ecffe55136ca69d7822ad1bfad4cd11acf0028b921d0c4f263e49571f",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "1973aa2a29a60817da68eed03b2e2774fb3b16693dd09c1d6751c355efeffb66"
+    },
+    {
+      "message": "Function \"_createDateTimeValue\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1001,
+          "column": 1,
+          "offset": 40321
+        },
+        "end": {
+          "line": 1022,
+          "column": 2,
+          "offset": 40923
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1001,
+              "column": 1,
+              "offset": 40321
+            },
+            "end": {
+              "line": 1022,
+              "column": 2,
+              "offset": 40923
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "8cbd547297e15acac9ebf70ac99fe2eb50b3bba0b0462be536076747fb654e94",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "dab36a835e17f970c65857eb38a832a417d0c461372e23dbb9ce52af34cf9c01"
+    },
+    {
+      "message": "Function \"_formatDateTimeForMessage\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1024,
+          "column": 1,
+          "offset": 40927
+        },
+        "end": {
+          "line": 1035,
+          "column": 2,
+          "offset": 41367
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1024,
+              "column": 1,
+              "offset": 40927
+            },
+            "end": {
+              "line": 1035,
+              "column": 2,
+              "offset": 41367
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "5011c6cfd98e631b087c4a0a6125fca762054033fce9c7ac6b2827909fe2e813",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "dced314d581915ece97d1c267e2821093b799e0c88e76014e0a16fbdb7b1da1e"
+    },
+    {
+      "message": "Function \"pad\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1025,
+          "column": 3,
+          "offset": 40980
+        },
+        "end": {
+          "line": 1027,
+          "column": 4,
+          "offset": 41064
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1025,
+              "column": 3,
+              "offset": 40980
+            },
+            "end": {
+              "line": 1027,
+              "column": 4,
+              "offset": 41064
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "2e691ff48cbb25c6560f3fcaf279678a586233ae13b8422c6c1d0c2fa3e163b9",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "52aadc9f7088f732fb4914788cfe0d4936d06f5c85b74792e7a5304a6e100914"
+    },
+    {
+      "message": "Function \"normalizeToken\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1260,
+          "column": 3,
+          "offset": 50357
+        },
+        "end": {
+          "line": 1263,
+          "column": 4,
+          "offset": 50516
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1260,
+              "column": 3,
+              "offset": 50357
+            },
+            "end": {
+              "line": 1263,
+              "column": 4,
+              "offset": 50516
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "2e455b1d00601ad30731485c49ee5a5b9ee22cfea1ea475fe526d6a3964e3912",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "bf7d3a73e970042cb1f1edf5edef1ea58cd0909e048b69de5de372b3b2097155"
+    },
+    {
+      "message": "Function \"_readArrayValue\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1372,
+          "column": 1,
+          "offset": 54025
+        },
+        "end": {
+          "line": 1416,
+          "column": 2,
+          "offset": 55849
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1372,
+              "column": 1,
+              "offset": 54025
+            },
+            "end": {
+              "line": 1416,
+              "column": 2,
+              "offset": 55849
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "ac291e710643ba6b36598a61d25c6025e1150cab33eef5b1b61aac67860be1e6",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "1b645ad56bf349ce6dbe2701b4f70c209bb92a8225ae2b771e71d3f33c69f780"
+    },
+    {
+      "message": "Function \"_createArrayValue\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1418,
+          "column": 1,
+          "offset": 55853
+        },
+        "end": {
+          "line": 1428,
+          "column": 2,
+          "offset": 56230
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1418,
+              "column": 1,
+              "offset": 55853
+            },
+            "end": {
+              "line": 1428,
+              "column": 2,
+              "offset": 56230
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "79e6639f653553573218aeb7d6bd2af8a42b749dc94aa9eab5d7d716faa2bd59",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "e18bb15a8756f60684953f7d1ec4d1fa156d6451152a15ff81651e23b69a8ccb"
+    },
+    {
+      "message": "Function \"_isEmptyArrayItem\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1430,
+          "column": 1,
+          "offset": 56234
+        },
+        "end": {
+          "line": 1443,
+          "column": 2,
+          "offset": 56821
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1430,
+              "column": 1,
+              "offset": 56234
+            },
+            "end": {
+              "line": 1443,
+              "column": 2,
+              "offset": 56821
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "cbfd340c130ba5db50a987856bf1382b005f4a4c4e74421c5575ed05654d9efc",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "7b398168d3b8db82d0ea1419b085b523527fa1011c04209c7ee273a1e08cf1d3"
+    },
+    {
+      "message": "Function \"_arrayItemKey\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1445,
+          "column": 1,
+          "offset": 56825
+        },
+        "end": {
+          "line": 1465,
+          "column": 2,
+          "offset": 57793
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1445,
+              "column": 1,
+              "offset": 56825
+            },
+            "end": {
+              "line": 1465,
+              "column": 2,
+              "offset": 57793
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "242ed6fb9e79ae66f95b6decfffec15f0d3abd4cf6fb4edee08c32b78b2b2f6b",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "8ebf52a6647ceb88f5b871186762fa71da52160688ba8445a632aad37d3d3e05"
+    },
+    {
+      "message": "Function \"validatorsList\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1725,
+          "column": 1,
+          "offset": 68333
+        },
+        "end": {
+          "line": 1734,
+          "column": 2,
+          "offset": 68567
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1725,
+              "column": 1,
+              "offset": 68333
+            },
+            "end": {
+              "line": 1734,
+              "column": 2,
+              "offset": 68567
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "eff97508dfe723db136acbc3327b0e8430ef54afd2043308efaee7eadeada413",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "315846e56e437962f07f105b40bda0f6cb06d6ecafb3499386e330412d936960"
+    },
+    {
+      "message": "Function \"getValidator\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 1743,
+          "column": 1,
+          "offset": 68756
+        },
+        "end": {
+          "line": 1748,
+          "column": 2,
+          "offset": 69004
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 1743,
+              "column": 1,
+              "offset": 68756
+            },
+            "end": {
+              "line": 1748,
+              "column": 2,
+              "offset": 69004
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "7beba161e47475e0c27ddf0f60a2894c6b5d5a6169f34bd5e6f8ea4fc34080ed",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validate_Fields.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validate_Fields.js",
+      "identity": "1766753837ab2ddea8e1b541d957fae7e30c3953358f14a8d9a35da0e5a2cab2"
+    },
+    {
+      "message": "Function \"_validationEngineHasOwn\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 7,
+          "column": 1,
+          "offset": 206
+        },
+        "end": {
+          "line": 9,
+          "column": 2,
+          "offset": 315
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 7,
+              "column": 1,
+              "offset": 206
+            },
+            "end": {
+              "line": 9,
+              "column": 2,
+              "offset": 315
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "9040992c200ff96e46d0c6424711c0b3a92eee263f56ce0d0d7fa9ddacca9f1c",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "a49a1b6d29d2e8bd721a2e1541fa07df1bc6dbb8c095ac0334734d72a7bee5e3"
+    },
+    {
+      "message": "Function \"_validationEngineError\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 11,
+          "column": 1,
+          "offset": 317
+        },
+        "end": {
+          "line": 27,
+          "column": 2,
+          "offset": 784
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 11,
+              "column": 1,
+              "offset": 317
+            },
+            "end": {
+              "line": 27,
+              "column": 2,
+              "offset": 784
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "1a6e02b97797bb8616f4a98a521ddd8b90fb176b34e04af0ca05e393a5af8725",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "3798c8d17f9eb6311c2ffa8cec635579d680f197819a1e07465e94473578ceee"
+    },
+    {
+      "message": "Function \"_validationEngineResult\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 29,
+          "column": 1,
+          "offset": 786
+        },
+        "end": {
+          "line": 37,
+          "column": 2,
+          "offset": 1021
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 29,
+              "column": 1,
+              "offset": 786
+            },
+            "end": {
+              "line": 37,
+              "column": 2,
+              "offset": 1021
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "eef0cf6433eecd2dd86cdc870e9c73844f59030cf9e7830e736d19d7117c769c",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "ec3f4775c8926f590920c48ddaec519641ffeb7852ea1b5c2f356630b1f1d428"
+    },
+    {
+      "message": "Function \"_validationEngineUnknownKey\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 39,
+          "column": 1,
+          "offset": 1023
+        },
+        "end": {
+          "line": 44,
+          "column": 2,
+          "offset": 1213
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 39,
+              "column": 1,
+              "offset": 1023
+            },
+            "end": {
+              "line": 44,
+              "column": 2,
+              "offset": 1213
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c63049ef8f367dd1610b71a5bb19e80b1a8e5620c4d3f77541aca2f5629d7d35",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "a13bbccd1bdf59057cba3a15f42e125c151f23cf2499c679c3245b6b7dc490d8"
+    },
+    {
+      "message": "Function \"_validationEngineResolveValidator\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 46,
+          "column": 1,
+          "offset": 1215
+        },
+        "end": {
+          "line": 53,
+          "column": 2,
+          "offset": 1577
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 46,
+              "column": 1,
+              "offset": 1215
+            },
+            "end": {
+              "line": 53,
+              "column": 2,
+              "offset": 1577
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "7e9e980655e8e5b78ec5a87a47eb9eb7cd248389de3e4054c23d69afbe7d2c1d",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "ee6aba66b9cb57f8783b6933c5a2d7b923cc3055e2ed9fcf6adc2a52ddd35612"
+    },
+    {
+      "message": "Function \"_validationEngineDraft\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 55,
+          "column": 1,
+          "offset": 1579
+        },
+        "end": {
+          "line": 75,
+          "column": 2,
+          "offset": 2196
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 55,
+              "column": 1,
+              "offset": 1579
+            },
+            "end": {
+              "line": 75,
+              "column": 2,
+              "offset": 2196
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "0572c8dfcb1051e551629e7aaf1eeb7f5ef0f083970734dedc699374de441945",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "555997343751158b725d0ec85eb4604f73e4bd14fc75a3ea00d26ef041f7f7e6"
+    },
+    {
+      "message": "Function \"_validationEngineNormalizeError\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 77,
+          "column": 1,
+          "offset": 2198
+        },
+        "end": {
+          "line": 93,
+          "column": 2,
+          "offset": 2870
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 77,
+              "column": 1,
+              "offset": 2198
+            },
+            "end": {
+              "line": 93,
+              "column": 2,
+              "offset": 2870
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c38e824e323f332aee10fb0a6ac1e398de3618b7f8006d3a7ad836ebc6b3b7a9",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "3dc1ce94ff180b1a96cb44ad798770d02832f7990735f67cea38939176856f4e"
+    },
+    {
+      "message": "Function \"_validationEngineValidateSchema\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 95,
+          "column": 1,
+          "offset": 2872
+        },
+        "end": {
+          "line": 277,
+          "column": 2,
+          "offset": 9326
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 95,
+              "column": 1,
+              "offset": 2872
+            },
+            "end": {
+              "line": 277,
+              "column": 2,
+              "offset": 9326
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "35d4d055ba3639929aad1369d5eb5891c287d9586c60e29f882586371dd01b4f",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "5567c7ae7c6e85f8a4e50333cf1cd3c94b3abfddf71e6a0039d2e372f4b5d4f1"
+    },
+    {
+      "message": "Function \"applyValidatedValues\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 279,
+          "column": 1,
+          "offset": 9328
+        },
+        "end": {
+          "line": 316,
+          "column": 2,
+          "offset": 10379
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 279,
+              "column": 1,
+              "offset": 9328
+            },
+            "end": {
+              "line": 316,
+              "column": 2,
+              "offset": 10379
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "445d7754be41cedff4f7fb8a328dbd1cfa0ce333e3796af073781cc840a066b7",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "43c0595b82ca411be18db7b0b2982a1bf478a590f20a2f6dd2e0e4498bbf51a2"
+    },
+    {
+      "message": "Function \"validateFields\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 318,
+          "column": 1,
+          "offset": 10381
+        },
+        "end": {
+          "line": 455,
+          "column": 2,
+          "offset": 15576
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 318,
+              "column": 1,
+              "offset": 10381
+            },
+            "end": {
+              "line": 455,
+              "column": 2,
+              "offset": 15576
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "0082c8fd6db1ed3b1270bc8c42028354258bb76be647b66ae8ee9ff9ff7c1e3a",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Engine.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Engine.js",
+      "identity": "b9ec97196edb944eaa51aee766268ae03298008de3c896529d3f06583ddd83fb"
+    },
+    {
+      "message": "Function \"toRulesetResult\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 7,
+          "column": 1,
+          "offset": 199
+        },
+        "end": {
+          "line": 29,
+          "column": 2,
+          "offset": 1027
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 7,
+              "column": 1,
+              "offset": 199
+            },
+            "end": {
+              "line": 29,
+              "column": 2,
+              "offset": 1027
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "bceed8f738effca0cc52485eb54ff3a6183578d0bf63207eba40486e5d4d7098",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "identity": "909c44cdb155c124a5e7f927ed12f6244187efdd3a061c3362b17d7699021477"
+    },
+    {
+      "message": "Function \"validateRecord\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 31,
+          "column": 1,
+          "offset": 1029
+        },
+        "end": {
+          "line": 45,
+          "column": 2,
+          "offset": 1499
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 31,
+              "column": 1,
+              "offset": 1029
+            },
+            "end": {
+              "line": 45,
+              "column": 2,
+              "offset": 1499
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "758ed894f3ee7925bdd328f6895679a021e4acdd9e6f23978fc872dffe7b034d",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_Ruleset_Adapter.js",
+      "identity": "18c5c87956c34b17d631eea951ecadfe87407e94a1f17891ed3f8ba3c204ef10"
+    },
+    {
+      "message": "Function \"_validationAdapterIsJsDate\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 7,
+          "column": 1,
+          "offset": 196
+        },
+        "end": {
+          "line": 9,
+          "column": 2,
+          "offset": 310
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 7,
+              "column": 1,
+              "offset": 196
+            },
+            "end": {
+              "line": 9,
+              "column": 2,
+              "offset": 310
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "a34ecf72909e4845e40ccc56619ad6dbb67167ddb67b136e190e166a22169574",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "identity": "28895023e2d047ea63929eb87bbb9b49d9775391ed09e2991f167bbe5958f90a"
+    },
+    {
+      "message": "Function \"readDateTime\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 11,
+          "column": 1,
+          "offset": 312
+        },
+        "end": {
+          "line": 40,
+          "column": 2,
+          "offset": 1459
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 11,
+              "column": 1,
+              "offset": 312
+            },
+            "end": {
+              "line": 40,
+              "column": 2,
+              "offset": 1459
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "d06ec6d3741020f32cac461b9acff92ab30fdbdac39492170c1dad338a73d421",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "identity": "0dac01aff60f5641853ce323b6e2a20d1afd7bc0412cd7c9be4252e12356f7e6"
+    },
+    {
+      "message": "Function \"createDateTime\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 42,
+          "column": 1,
+          "offset": 1461
+        },
+        "end": {
+          "line": 62,
+          "column": 2,
+          "offset": 2043
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 42,
+              "column": 1,
+              "offset": 1461
+            },
+            "end": {
+              "line": 62,
+              "column": 2,
+              "offset": 2043
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "8ff2a1eaf682acf7868fd1643139deded2756922aeb16933fb76f35751e094ce",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "identity": "9b3d64859ba438bcabee2eab599dd3cf7eb9dae6fcfa21edfbdb8c2ed9e91985"
+    },
+    {
+      "message": "Function \"readArray\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 64,
+          "column": 1,
+          "offset": 2045
+        },
+        "end": {
+          "line": 101,
+          "column": 2,
+          "offset": 3516
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 64,
+              "column": 1,
+              "offset": 2045
+            },
+            "end": {
+              "line": 101,
+              "column": 2,
+              "offset": 3516
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "bfd00de3d4bc5d66240afb96ba5ed1a81c224bead64772d70de96d820a0a9cea",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "identity": "653e122e151ada96bb80eb2a7056c6dfac65a6a5aa89d2bb492602be3b9cf60b"
+    },
+    {
+      "message": "Function \"createArray\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 103,
+          "column": 1,
+          "offset": 3518
+        },
+        "end": {
+          "line": 110,
+          "column": 2,
+          "offset": 3816
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 103,
+              "column": 1,
+              "offset": 3518
+            },
+            "end": {
+              "line": 110,
+              "column": 2,
+              "offset": 3816
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "9fb4e59adec81f5446e5e631f4385003e1a7452a250d62a8438d276faaf6a1f2",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "relativeFilePath": "ESD_CORE/ESD_Validation_SM_Adapter.js",
+      "identity": "d9a478ed31ef75bd55d65e277baad6e41185211a2c4c5c661050e0ceea285102"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 19,
+          "column": 5,
+          "offset": 829
+        },
+        "end": {
+          "line": 19,
+          "column": 68,
+          "offset": 892
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 19,
+              "column": 5,
+              "offset": 829
+            },
+            "end": {
+              "line": 19,
+              "column": 68,
+              "offset": 892
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "e8ac5f34677818b5d4990dc004c14b2fbe062c835f66c7df04533a4280c7254a",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "relativeFilePath": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "identity": "4d861a37a66f94d996fb0e9545f9bb6beec16d6c16fca1b7ae81ddd8496bca52"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 54,
+          "column": 5,
+          "offset": 2096
+        },
+        "end": {
+          "line": 54,
+          "column": 106,
+          "offset": 2197
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 54,
+              "column": 5,
+              "offset": 2096
+            },
+            "end": {
+              "line": 54,
+              "column": 106,
+              "offset": 2197
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "a70e9f72435e38842783133ff7469d95e79ca77229bcdb35849a55699fdc18cd",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "relativeFilePath": "ESD_SHARED/ESD_RecordURLUtil.js",
+      "identity": "6b174964bd112ebc7f1187db0381c15d3fcbe4f6b29ff2aa995ca03fd68e687d"
+    },
+    {
+      "message": "Function \"createSchedule\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 21,
+          "column": 1,
+          "offset": 745
+        },
+        "end": {
+          "line": 98,
+          "column": 2,
+          "offset": 2830
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 21,
+              "column": 1,
+              "offset": 745
+            },
+            "end": {
+              "line": 98,
+              "column": 2,
+              "offset": 2830
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "b47372741dd4ca439eb0f2c71592f982dec677f6b65f3a3dee0353009686dd6b",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_SHARED/ESD_SCHEDULE_Utils.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_SHARED/ESD_SCHEDULE_Utils.js",
+      "relativeFilePath": "ESD_SHARED/ESD_SCHEDULE_Utils.js",
+      "identity": "229c47b9fab7841c2b4179aefcbf6090119bcd92dd18a8ea922a0d5cbe19e665"
+    },
+    {
+      "message": "Function \"getApprovers\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 14,
+          "column": 1,
+          "offset": 311
+        },
+        "end": {
+          "line": 21,
+          "column": 2,
+          "offset": 694
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 14,
+              "column": 1,
+              "offset": 311
+            },
+            "end": {
+              "line": 21,
+              "column": 2,
+              "offset": 694
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c6291a4107f2873e706178f9e9318519b8a34efccc701bd46a4e1de37b5afe0d",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/capquyenPQDL.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/capquyenPQDL.js",
+      "relativeFilePath": "ESD_TEST/capquyenPQDL.js",
+      "identity": "f27e74e85172fcc3c96645349184d5210189fb682f8910c9296f823cddacceb6"
+    },
+    {
+      "message": "Function \"getCreatorOrgUnit\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 26,
+          "column": 1,
+          "offset": 812
+        },
+        "end": {
+          "line": 34,
+          "column": 2,
+          "offset": 1121
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 26,
+              "column": 1,
+              "offset": 812
+            },
+            "end": {
+              "line": 34,
+              "column": 2,
+              "offset": 1121
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "606234b21a011c114ed318be88311ea397f6da65e486b4d5fbd3f5ae053626a7",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/capquyenPQDL.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/capquyenPQDL.js",
+      "relativeFilePath": "ESD_TEST/capquyenPQDL.js",
+      "identity": "359b5d55d03a85cf7b868e9521098293115fd77ed2526c51adad813e6a40b101"
+    },
+    {
+      "message": "Function \"getAttachmentDisplayName\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 3,
+          "column": 1,
+          "offset": 18
+        },
+        "end": {
+          "line": 12,
+          "column": 2,
+          "offset": 276
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 3,
+              "column": 1,
+              "offset": 18
+            },
+            "end": {
+              "line": 12,
+              "column": 2,
+              "offset": 276
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "1dbbdff4c6fb0ada87d43bf4723e31505f748b296802788cdf699dbb58f5eb36",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "333063d4972ecce13ec51954a26952e5593adaef11283ec2cbdbf7bcc91bcd74"
+    },
+    {
+      "message": "Function \"getAttachmentByUid\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 14,
+          "column": 1,
+          "offset": 278
+        },
+        "end": {
+          "line": 34,
+          "column": 2,
+          "offset": 901
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 14,
+              "column": 1,
+              "offset": 278
+            },
+            "end": {
+              "line": 34,
+              "column": 2,
+              "offset": 901
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "f4aedd74beef3a5b73aa6c042e1b1f1d3dd37c39e53480a89841137174f4e0a1",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "948b6f231db71cd179b38ccd8ca32b0f04ed78318a696b480a385d709691a1f0"
+    },
+    {
+      "message": "Function \"getAttachmentList\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 36,
+          "column": 1,
+          "offset": 903
+        },
+        "end": {
+          "line": 77,
+          "column": 2,
+          "offset": 2203
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 36,
+              "column": 1,
+              "offset": 903
+            },
+            "end": {
+              "line": 77,
+              "column": 2,
+              "offset": 2203
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "78c78b246c664fffc02e093086b0310658517440cbeabe888b237e2917fd6ceb",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "08406eb2783cc1d66f5036004daf7b10d717a6c41b2960f81fb70c73548f1ed2"
+    },
+    {
+      "message": "Function \"escapeHtml\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 79,
+          "column": 1,
+          "offset": 2205
+        },
+        "end": {
+          "line": 86,
+          "column": 2,
+          "offset": 2419
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 79,
+              "column": 1,
+              "offset": 2205
+            },
+            "end": {
+              "line": 86,
+              "column": 2,
+              "offset": 2419
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "09f90a651aa83408f943f3fe81ae64d9696dce32bdfcb23baea8606d9c31f376",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "a575a0d32a154dddf03bc8e12169a3cb17cca49e8f8e46a0357235360bce279f"
+    },
+    {
+      "message": "Function \"formatAttachmentSize\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 88,
+          "column": 1,
+          "offset": 2421
+        },
+        "end": {
+          "line": 100,
+          "column": 2,
+          "offset": 2679
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 88,
+              "column": 1,
+              "offset": 2421
+            },
+            "end": {
+              "line": 100,
+              "column": 2,
+              "offset": 2679
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "8c98b98a858dade338eee40f1f4b74f22a1d9ae017546bcad76b879dc73c2231",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "bd7935438f032d4220fcb8301cc74edc8be4021a71f588ca40086cbfef01036d"
+    },
+    {
+      "message": "Function \"formatAttachmentDate\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 102,
+          "column": 1,
+          "offset": 2681
+        },
+        "end": {
+          "line": 112,
+          "column": 2,
+          "offset": 2865
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 102,
+              "column": 1,
+              "offset": 2681
+            },
+            "end": {
+              "line": 112,
+              "column": 2,
+              "offset": 2865
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "67a341e9608bee26bd61533b2939851b271237a396df190847055a5f7429f663",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "e8a8d0bfb792fe4ec7dcf6d5f6fdd50bf4c420c0377e424621a2d00f490cf658"
+    },
+    {
+      "message": "Function \"getAttachmentListHtml\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 114,
+          "column": 1,
+          "offset": 2867
+        },
+        "end": {
+          "line": 162,
+          "column": 2,
+          "offset": 4492
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 114,
+              "column": 1,
+              "offset": 2867
+            },
+            "end": {
+              "line": 162,
+              "column": 2,
+              "offset": 4492
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c205b9c1c9c793cbb71784a96cbb68fbf28b85ecd2b966db34c4496f85012a21",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "c4f7b48dcbea3a2530bcb05caed69c75202d9ae5f5c7ccb98ed70d25a1d8fac0"
+    },
+    {
+      "message": "Function \"testAttachmentListHtml\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 164,
+          "column": 1,
+          "offset": 4494
+        },
+        "end": {
+          "line": 168,
+          "column": 2,
+          "offset": 4671
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 164,
+              "column": 1,
+              "offset": 4494
+            },
+            "end": {
+              "line": 168,
+              "column": 2,
+              "offset": 4671
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "403828c8a58f1c5c520458412a51c790e3d4efb2f14a48eea917b39f5ef5a4ec",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "749b7aacd3849aca69e4fa87047718f9ce6dd5331db8f01eb6049ca4ab5f48ed"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 166,
+          "column": 3,
+          "offset": 4612
+        },
+        "end": {
+          "line": 166,
+          "column": 44,
+          "offset": 4653
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 166,
+              "column": 3,
+              "offset": 4612
+            },
+            "end": {
+              "line": 166,
+              "column": 44,
+              "offset": 4653
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "2002df34cee9852a0b7e3fdbe9a52fafd1fa389636891731afdec5fa8f27f9ed",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "ESD_TEST/downloadattachment.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/downloadattachment.js",
+      "relativeFilePath": "ESD_TEST/downloadattachment.js",
+      "identity": "9038be6e2bf14c95b43af5435df31362901d721901e0ca8fa4344efe9ec1c029"
+    },
+    {
+      "message": "Function \"validateExampleForm\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 52,
+          "column": 1,
+          "offset": 1583
+        },
+        "end": {
+          "line": 250,
+          "column": 2,
+          "offset": 6431
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 52,
+              "column": 1,
+              "offset": 1583
+            },
+            "end": {
+              "line": 250,
+              "column": 2,
+              "offset": 6431
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "a3aeacd807c64dc0184107fe940ca98bc9bc7d16b17d7de20b1ef9a26768cb74",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "relativeFilePath": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "identity": "c70c1fb0607aec3e4bc4e850549069a9c6d50c61c19d9f12b6d11ca38c4fa654"
+    },
+    {
+      "message": "Function \"when\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 221,
+          "column": 13,
+          "offset": 5574
+        },
+        "end": {
+          "line": 223,
+          "column": 8,
+          "offset": 5643
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 221,
+              "column": 13,
+              "offset": 5574
+            },
+            "end": {
+              "line": 223,
+              "column": 8,
+              "offset": 5643
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "ad494943baeb902d5db3e5e8c1cfa54f5b7c72ec71813eae65bec9941be41307",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "relativeFilePath": "ESD_TEST/ESD_Validate_Fields_Ruleset_Example.js",
+      "identity": "a12d9964fe2bb94be7e72908585043c83168897e3f585a0a0a0d1ffb8a18735f"
+    },
+    {
+      "message": "Function \"validatePCQ\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 74,
+          "column": 1,
+          "offset": 2341
+        },
+        "end": {
+          "line": 165,
+          "column": 2,
+          "offset": 4571
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 74,
+              "column": 1,
+              "offset": 2341
+            },
+            "end": {
+              "line": 165,
+              "column": 2,
+              "offset": 4571
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "92612abde88eb38db7335dbb5927907b41145f8575851aa6fcaa3a8c2f987374",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "ESD_TEST/ESD_Validate_PCQ.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "ESD_TEST/ESD_Validate_PCQ.js",
+      "relativeFilePath": "ESD_TEST/ESD_Validate_PCQ.js",
+      "identity": "ef0ffcac3d0f1ac6d4f13da05e0e5321aa86cfdb221620d6f8487de937e3e1f7"
+    },
+    {
+      "message": "Function \"loadScript\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 8,
+          "column": 1,
+          "offset": 211
+        },
+        "end": {
+          "line": 18,
+          "column": 2,
+          "offset": 492
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 8,
+              "column": 1,
+              "offset": 211
+            },
+            "end": {
+              "line": 18,
+              "column": 2,
+              "offset": 492
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "44dd79d535a546a6f5a973169d731a39e34b7c8070d851ad28ef89c355d1858c",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "2c40b6f8e05a498b35584e1ddd24dd740aae6841aa74199a4946d8d6a3c1cdfe"
+    },
+    {
+      "message": "Function \"assert\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 20,
+          "column": 1,
+          "offset": 494
+        },
+        "end": {
+          "line": 23,
+          "column": 2,
+          "offset": 614
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 20,
+              "column": 1,
+              "offset": 494
+            },
+            "end": {
+              "line": 23,
+              "column": 2,
+              "offset": 614
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "73af9a3bc5f8abc3730c479b2f7373c5d04f1850ab6ac0b133f1365b26f97155",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "106fd1f8123bf41ed34573af110359f39c765542c3e65d47772a59c3a7a322e1"
+    },
+    {
+      "message": "Function \"MockSCDatum\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 60,
+          "column": 1,
+          "offset": 1890
+        },
+        "end": {
+          "line": 64,
+          "column": 2,
+          "offset": 1976
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionDeclaration has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 60,
+              "column": 1,
+              "offset": 1890
+            },
+            "end": {
+              "line": 64,
+              "column": 2,
+              "offset": 1976
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "294ed294e2aeef2fac9c22413f97876a462e7b5b3f9e8a9fc1837f4b6b04870f",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "7e48e715a6f11d1369d47f5f54c123f061f564c7d9f30e8deca933be6d9b5b07"
+    },
+    {
+      "message": "Function \"MockSCDatum.prototype.setType\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 65,
+          "column": 33,
+          "offset": 2009
+        },
+        "end": {
+          "line": 65,
+          "column": 70,
+          "offset": 2046
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 65,
+              "column": 33,
+              "offset": 2009
+            },
+            "end": {
+              "line": 65,
+              "column": 70,
+              "offset": 2046
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "b29876d4c8c37735cc54e1a90e66cdb245e7ce65ac42da3ba25f7ddde6bb7006",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "2b1f2ab0d48c73966c0cb1a3619c7657f2e44055558b6e997a38a363d481a36d"
+    },
+    {
+      "message": "Function \"MockSCDatum.prototype.getType\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 66,
+          "column": 33,
+          "offset": 2080
+        },
+        "end": {
+          "line": 66,
+          "column": 66,
+          "offset": 2113
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 66,
+              "column": 33,
+              "offset": 2080
+            },
+            "end": {
+              "line": 66,
+              "column": 66,
+              "offset": 2113
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c3bc13fc3bea663c404339e50dbda81844806e1664bc3d551491e45e13fe0b67",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "88e93b9b3c9f4148f5939f871c7861f7d8ff60a911164b9d9ddbaf4a807889e3"
+    },
+    {
+      "message": "Function \"MockSCDatum.prototype.getTime\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 67,
+          "column": 33,
+          "offset": 2147
+        },
+        "end": {
+          "line": 67,
+          "column": 67,
+          "offset": 2181
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 67,
+              "column": 33,
+              "offset": 2147
+            },
+            "end": {
+              "line": 67,
+              "column": 67,
+              "offset": 2181
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "4ba6661b27833ff83b96fe03e9ef3120ebcecac243a35e058c6dd2628c7a6b3c",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "a2a5b08e1a6195cd45e1b7e2882fbd6a0f5b511a4e897f174bdad7bb3400c7f3"
+    },
+    {
+      "message": "Function \"MockSCDatum.prototype.push\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 68,
+          "column": 30,
+          "offset": 2212
+        },
+        "end": {
+          "line": 68,
+          "column": 74,
+          "offset": 2256
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 68,
+              "column": 30,
+              "offset": 2212
+            },
+            "end": {
+              "line": 68,
+              "column": 74,
+              "offset": 2256
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "c7193e94589a3b097295588d7a6cf4f7b72987f2e8c0cc5781807facfaf53b22",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "baab52dc05bdcda943847c456d467768876a20510a4911d1cb779143bac9bd80"
+    },
+    {
+      "message": "Function \"MockSCDatum.prototype.toArray\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 69,
+          "column": 33,
+          "offset": 2290
+        },
+        "end": {
+          "line": 69,
+          "column": 76,
+          "offset": 2333
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 69,
+              "column": 33,
+              "offset": 2290
+            },
+            "end": {
+              "line": 69,
+              "column": 76,
+              "offset": 2333
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "93492740df7660d1e83544c6b0b56de49e736f35061776b41b62e28a1abf3eb7",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "5f7425c5daf57da644d0af158621fc6af39bd721941807288c5cecc9225b5a82"
+    },
+    {
+      "message": "Function \"datemake\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 74,
+          "column": 15,
+          "offset": 2462
+        },
+        "end": {
+          "line": 76,
+          "column": 6,
+          "offset": 2613
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 74,
+              "column": 15,
+              "offset": 2462
+            },
+            "end": {
+              "line": 76,
+              "column": 6,
+              "offset": 2613
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "dbb6475226ba7e646fef4cd24ce484ab626ae56104cc50729135e539696eb0bd",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "3e06268369f94b187c18d2114b05fe425c51fc525dc595175f9c45fd3d2f93d3"
+    },
+    {
+      "message": "Function \"lng\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 77,
+          "column": 10,
+          "offset": 2624
+        },
+        "end": {
+          "line": 77,
+          "column": 57,
+          "offset": 2671
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 77,
+              "column": 10,
+              "offset": 2624
+            },
+            "end": {
+              "line": 77,
+              "column": 57,
+              "offset": 2671
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "2f7cff6f7fe37bb2b056dfa82a70557d7d74f533206d5daf1b20b2ab3be4f6ae",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "a84bf32e9dd7b3c5051432ffba65f2a028ff09a437149907e4bac8d12b8df6ca"
+    },
+    {
+      "message": "Function \"validator\" has no leading comment.",
+      "range": {
+        "start": {
+          "line": 169,
+          "column": 16,
+          "offset": 6312
+        },
+        "end": {
+          "line": 169,
+          "column": 55,
+          "offset": 6351
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Named FunctionExpression has no associated leading comment.",
+          "range": {
+            "start": {
+              "line": 169,
+              "column": 16,
+              "offset": 6312
+            },
+            "end": {
+              "line": 169,
+              "column": 55,
+              "offset": 6351
+            }
+          }
+        }
+      ],
+      "suggestion": "Add an adjacent leading comment that explains the function purpose.",
+      "fingerprint": "e310a0d58f01e70c6f242df128b3ce7d8e5533b3a24dd30956266d653aca9fb5",
+      "ruleId": "SM-CMT-001",
+      "sourceId": "Tests/ESD_Validation_Core_Test.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tests/ESD_Validation_Core_Test.js",
+      "relativeFilePath": "Tests/ESD_Validation_Core_Test.js",
+      "identity": "32afdb647543d2e8499520e2fc996723e5eccecf1998d2d18e0b0019e88e66d0"
+    },
+    {
+      "message": "Return code from SCFile.doInsert() is assigned to \"rc\" but has no supported observable use.",
+      "range": {
+        "start": {
+          "line": 114,
+          "column": 32,
+          "offset": 3724
+        },
+        "end": {
+          "line": 114,
+          "column": 49,
+          "offset": 3741
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Officially cataloged SCFile.doInsert() return-code result is assigned but unconsumed.",
+          "range": {
+            "start": {
+              "line": 114,
+              "column": 32,
+              "offset": 3724
+            },
+            "end": {
+              "line": 114,
+              "column": 49,
+              "offset": 3741
+            }
+          }
+        }
+      ],
+      "suggestion": "Check, return, or pass the result to explicit return-code handling logic.",
+      "fingerprint": "60d419eaeb8f925dc24e46ee070d22b62ccf6693914177237796946571d7caf3",
+      "ruleId": "SM-RC-001",
+      "sourceId": "Tools/copy_duplicate_file.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tools/copy_duplicate_file.js",
+      "relativeFilePath": "Tools/copy_duplicate_file.js",
+      "identity": "8bf4ee8ae2086307a34856d4910dfa866c4c2ed1edb122e124fcd67c2a4da1af"
+    },
+    {
+      "message": "Return code from SCFile.doUpdate() is assigned to \"rc\" but has no supported observable use.",
+      "range": {
+        "start": {
+          "line": 114,
+          "column": 52,
+          "offset": 3744
+        },
+        "end": {
+          "line": 114,
+          "column": 69,
+          "offset": 3761
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Officially cataloged SCFile.doUpdate() return-code result is assigned but unconsumed.",
+          "range": {
+            "start": {
+              "line": 114,
+              "column": 52,
+              "offset": 3744
+            },
+            "end": {
+              "line": 114,
+              "column": 69,
+              "offset": 3761
+            }
+          }
+        }
+      ],
+      "suggestion": "Check, return, or pass the result to explicit return-code handling logic.",
+      "fingerprint": "6a14633415a96e4ac31b257fdf62bde6593caf00dbb3a80360899c5e5798ed5d",
+      "ruleId": "SM-RC-001",
+      "sourceId": "Tools/copy_duplicate_file.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tools/copy_duplicate_file.js",
+      "relativeFilePath": "Tools/copy_duplicate_file.js",
+      "identity": "30ffd4fc1268972352e24a932e025ef222cfc1ab6fdf93192d5394b721a469c1"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 129,
+          "column": 5,
+          "offset": 4034
+        },
+        "end": {
+          "line": 129,
+          "column": 39,
+          "offset": 4068
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 129,
+              "column": 5,
+              "offset": 4034
+            },
+            "end": {
+              "line": 129,
+              "column": 39,
+              "offset": 4068
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "415f28f74ea8ea8e931cbea2e2327a526e32fd14d72092f45c8a08e86c050579",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "Tools/copy_duplicate_file.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tools/copy_duplicate_file.js",
+      "relativeFilePath": "Tools/copy_duplicate_file.js",
+      "identity": "8c70cf6fae8cf61e066158a434e45ffa7a75db031b0fa9fedf65f39f4884e641"
+    },
+    {
+      "message": "Remove direct print() debug output from production code.",
+      "range": {
+        "start": {
+          "line": 232,
+          "column": 5,
+          "offset": 6752
+        },
+        "end": {
+          "line": 232,
+          "column": 53,
+          "offset": 6800
+        }
+      },
+      "evidence": [
+        {
+          "kind": "ast",
+          "message": "Direct call expression targets the identifier print.",
+          "range": {
+            "start": {
+              "line": 232,
+              "column": 5,
+              "offset": 6752
+            },
+            "end": {
+              "line": 232,
+              "column": 53,
+              "offset": 6800
+            }
+          }
+        }
+      ],
+      "suggestion": "Remove the debug call or replace it with the approved logging mechanism.",
+      "fingerprint": "dfe9f927ba03685482ad10e8fe6e03641a2fb3e2509dd40df1a9874cb2f31605",
+      "ruleId": "SM-DBG-001",
+      "sourceId": "Tools/copy_duplicate_file.js",
+      "severity": "warning",
+      "classification": "deterministic",
+      "confidence": 1,
+      "analysisStatus": "valid",
+      "filePath": "Tools/copy_duplicate_file.js",
+      "relativeFilePath": "Tools/copy_duplicate_file.js",
+      "identity": "ed98a41b956c51b1c042a5a5c7fc00ac6afd104ffb7aa86515b99d9528faec05"
+    }
+  ],
+  "unclassifiedFindings": [
+    "45056f1d8943b8ed3639b90da10a18e0b6e3f7d327bf0ed33e68a77cb529fd8e",
+    "f115ac3e4f00b4c4efb013be7fd33f16e5ca0d7844f5f7e1d2bac8b0b738178f",
+    "5882a012d061289934a50aa87be1b014c11fa86976a612ca200a5c10ec4ac0b4",
+    "a1cf48ee32732bb247cd9cdcd0acb230052d7a7ea922ad939889c12ad0d84245",
+    "e22e87aa1502c6ce6e7f21732dff6b001a8744a30bb0ce1de980f6a46cf5d246",
+    "7423a01e91b8935ce498f37017ec7ee310eece4f3822b16f22ee8d755f85dfe8",
+    "7e8c16a6a09b714566623c54c1582cba3e708486995c0a131bb3fcfb647dbcd4",
+    "d7c1e6feb995d7ab0d5f024743fa71ee0ce66f902bfd63e688a685350d521e2a",
+    "45787ab87ceccbb34d390c14d8e51bac41e811641bd27e1891e553f82b7a5a57",
+    "f35c784d71776b5fc0c84e77f8290cf54b60f50b713bf3c26fe52a361cfac7a8",
+    "f09dd3e4d8ce6f8826b0785374a3cd81984347096e3ba1f71fa2b630520edff7",
+    "0267a7ef7c22b84ecb015e56b73c8e2dcc8d35064760c1ae4cae711c745897b8",
+    "19b1d61fe8a43ac2a6465987895381b3d0fba01369f88d7bb902d4084ea2efc0",
+    "1973aa2a29a60817da68eed03b2e2774fb3b16693dd09c1d6751c355efeffb66",
+    "dab36a835e17f970c65857eb38a832a417d0c461372e23dbb9ce52af34cf9c01",
+    "dced314d581915ece97d1c267e2821093b799e0c88e76014e0a16fbdb7b1da1e",
+    "52aadc9f7088f732fb4914788cfe0d4936d06f5c85b74792e7a5304a6e100914",
+    "bf7d3a73e970042cb1f1edf5edef1ea58cd0909e048b69de5de372b3b2097155",
+    "1b645ad56bf349ce6dbe2701b4f70c209bb92a8225ae2b771e71d3f33c69f780",
+    "e18bb15a8756f60684953f7d1ec4d1fa156d6451152a15ff81651e23b69a8ccb",
+    "7b398168d3b8db82d0ea1419b085b523527fa1011c04209c7ee273a1e08cf1d3",
+    "8ebf52a6647ceb88f5b871186762fa71da52160688ba8445a632aad37d3d3e05",
+    "315846e56e437962f07f105b40bda0f6cb06d6ecafb3499386e330412d936960",
+    "1766753837ab2ddea8e1b541d957fae7e30c3953358f14a8d9a35da0e5a2cab2",
+    "a49a1b6d29d2e8bd721a2e1541fa07df1bc6dbb8c095ac0334734d72a7bee5e3",
+    "3798c8d17f9eb6311c2ffa8cec635579d680f197819a1e07465e94473578ceee",
+    "ec3f4775c8926f590920c48ddaec519641ffeb7852ea1b5c2f356630b1f1d428",
+    "a13bbccd1bdf59057cba3a15f42e125c151f23cf2499c679c3245b6b7dc490d8",
+    "ee6aba66b9cb57f8783b6933c5a2d7b923cc3055e2ed9fcf6adc2a52ddd35612",
+    "555997343751158b725d0ec85eb4604f73e4bd14fc75a3ea00d26ef041f7f7e6",
+    "3dc1ce94ff180b1a96cb44ad798770d02832f7990735f67cea38939176856f4e",
+    "5567c7ae7c6e85f8a4e50333cf1cd3c94b3abfddf71e6a0039d2e372f4b5d4f1",
+    "43c0595b82ca411be18db7b0b2982a1bf478a590f20a2f6dd2e0e4498bbf51a2",
+    "b9ec97196edb944eaa51aee766268ae03298008de3c896529d3f06583ddd83fb",
+    "909c44cdb155c124a5e7f927ed12f6244187efdd3a061c3362b17d7699021477",
+    "18c5c87956c34b17d631eea951ecadfe87407e94a1f17891ed3f8ba3c204ef10",
+    "28895023e2d047ea63929eb87bbb9b49d9775391ed09e2991f167bbe5958f90a",
+    "0dac01aff60f5641853ce323b6e2a20d1afd7bc0412cd7c9be4252e12356f7e6",
+    "9b3d64859ba438bcabee2eab599dd3cf7eb9dae6fcfa21edfbdb8c2ed9e91985",
+    "653e122e151ada96bb80eb2a7056c6dfac65a6a5aa89d2bb492602be3b9cf60b",
+    "d9a478ed31ef75bd55d65e277baad6e41185211a2c4c5c661050e0ceea285102",
+    "4d861a37a66f94d996fb0e9545f9bb6beec16d6c16fca1b7ae81ddd8496bca52",
+    "6b174964bd112ebc7f1187db0381c15d3fcbe4f6b29ff2aa995ca03fd68e687d",
+    "229c47b9fab7841c2b4179aefcbf6090119bcd92dd18a8ea922a0d5cbe19e665",
+    "f27e74e85172fcc3c96645349184d5210189fb682f8910c9296f823cddacceb6",
+    "359b5d55d03a85cf7b868e9521098293115fd77ed2526c51adad813e6a40b101",
+    "333063d4972ecce13ec51954a26952e5593adaef11283ec2cbdbf7bcc91bcd74",
+    "948b6f231db71cd179b38ccd8ca32b0f04ed78318a696b480a385d709691a1f0",
+    "08406eb2783cc1d66f5036004daf7b10d717a6c41b2960f81fb70c73548f1ed2",
+    "a575a0d32a154dddf03bc8e12169a3cb17cca49e8f8e46a0357235360bce279f",
+    "bd7935438f032d4220fcb8301cc74edc8be4021a71f588ca40086cbfef01036d",
+    "e8a8d0bfb792fe4ec7dcf6d5f6fdd50bf4c420c0377e424621a2d00f490cf658",
+    "c4f7b48dcbea3a2530bcb05caed69c75202d9ae5f5c7ccb98ed70d25a1d8fac0",
+    "749b7aacd3849aca69e4fa87047718f9ce6dd5331db8f01eb6049ca4ab5f48ed",
+    "9038be6e2bf14c95b43af5435df31362901d721901e0ca8fa4344efe9ec1c029",
+    "c70c1fb0607aec3e4bc4e850549069a9c6d50c61c19d9f12b6d11ca38c4fa654",
+    "a12d9964fe2bb94be7e72908585043c83168897e3f585a0a0a0d1ffb8a18735f",
+    "ef0ffcac3d0f1ac6d4f13da05e0e5321aa86cfdb221620d6f8487de937e3e1f7",
+    "2c40b6f8e05a498b35584e1ddd24dd740aae6841aa74199a4946d8d6a3c1cdfe",
+    "106fd1f8123bf41ed34573af110359f39c765542c3e65d47772a59c3a7a322e1",
+    "7e48e715a6f11d1369d47f5f54c123f061f564c7d9f30e8deca933be6d9b5b07",
+    "2b1f2ab0d48c73966c0cb1a3619c7657f2e44055558b6e997a38a363d481a36d",
+    "88e93b9b3c9f4148f5939f871c7861f7d8ff60a911164b9d9ddbaf4a807889e3",
+    "a2a5b08e1a6195cd45e1b7e2882fbd6a0f5b511a4e897f174bdad7bb3400c7f3",
+    "baab52dc05bdcda943847c456d467768876a20510a4911d1cb779143bac9bd80",
+    "5f7425c5daf57da644d0af158621fc6af39bd721941807288c5cecc9225b5a82",
+    "3e06268369f94b187c18d2114b05fe425c51fc525dc595175f9c45fd3d2f93d3",
+    "a84bf32e9dd7b3c5051432ffba65f2a028ff09a437149907e4bac8d12b8df6ca",
+    "32afdb647543d2e8499520e2fc996723e5eccecf1998d2d18e0b0019e88e66d0",
+    "8bf4ee8ae2086307a34856d4910dfa866c4c2ed1edb122e124fcd67c2a4da1af",
+    "30ffd4fc1268972352e24a932e025ef222cfc1ab6fdf93192d5394b721a469c1",
+    "8c70cf6fae8cf61e066158a434e45ffa7a75db031b0fa9fedf65f39f4884e641",
+    "ed98a41b956c51b1c042a5a5c7fc00ac6afd104ffb7aa86515b99d9528faec05"
+  ],
+  "unmatchedClassifications": [],
+  "coverage": {
+    "status": "incomplete",
+    "corpus": {
+      "status": "incomplete",
+      "reasons": [
+        "Corpus completeness was not declared by the owner."
+      ]
+    },
+    "execution": {
+      "status": "complete",
+      "ruleErrorCount": 0,
+      "ruleErrors": [],
+      "reasons": []
+    },
+    "semantic": {
+      "status": "not-established",
+      "reasons": [
+        "Static analysis and manual labels do not establish SM runtime semantic coverage."
+      ]
+    },
+    "corpusDeclaredComplete": false,
+    "unsupportedFileCount": 0,
+    "fileFailureCount": 0,
+    "filesWithParseDiagnostics": 0,
+    "filesWithSyntaxGatedRules": 0,
+    "reasons": [
+      "Corpus completeness was not declared by the owner.",
+      "Static analysis and manual labels do not establish SM runtime semantic coverage."
+    ]
+  },
+  "summary": {
+    "files": 13,
+    "findings": 73,
+    "deterministicFindings": 73,
+    "heuristicFindings": 0,
+    "truePositives": 0,
+    "falsePositives": 0,
+    "needsVerification": 0,
+    "unclassified": 73
+  }
+}

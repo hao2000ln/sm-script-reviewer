@@ -131,6 +131,8 @@ export interface UatFindingGroup {
 }
 
 export interface UatBaselineComparison {
+  readonly configurationChanged: boolean;
+  readonly configurationComparisonStatus: 'same' | 'changed' | 'unknown';
   readonly newFindings: readonly string[];
   readonly removedFindings: readonly string[];
   readonly persistentFindings: readonly string[];
@@ -254,7 +256,26 @@ export function compareUatBaselines(
       ...(classificationNote ? { note: classificationNote } : {}),
     }))
     .sort((left, right) => left.identity.localeCompare(right.identity));
-  return { newFindings, removedFindings, persistentFindings, changedSourceFiles, unmatchedPriorClassifications };
+  const configurationComparisonStatus = compareRuleConfiguration(previous, current);
+  return {
+    configurationChanged: configurationComparisonStatus === 'changed',
+    configurationComparisonStatus,
+    newFindings,
+    removedFindings,
+    persistentFindings,
+    changedSourceFiles,
+    unmatchedPriorClassifications,
+  };
+}
+
+export function renderVietnameseComparisonWarning(comparison: UatBaselineComparison): string | undefined {
+  if (comparison.configurationComparisonStatus === 'changed') {
+    return 'Cảnh báo: cấu hình rule đã thay đổi; findings “mất” không được kết luận là source defect đã sửa.';
+  }
+  if (comparison.configurationComparisonStatus === 'unknown') {
+    return 'Cảnh báo: baseline cũ không có ruleConfigurationHash; findings “mất” không được kết luận là source defect đã sửa.';
+  }
+  return undefined;
 }
 
 export function createManifestTemplate(report: UatBaselineReport): UatManifest {
@@ -383,6 +404,16 @@ function aggregateSourceHash(files: readonly UatBaselineReport['files'][number][
 
 function hashValue(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function compareRuleConfiguration(
+  previous: UatBaselineReport,
+  current: UatBaselineReport,
+): UatBaselineComparison['configurationComparisonStatus'] {
+  const previousHash = previous.provenance?.ruleConfigurationHash;
+  const currentHash = current.provenance?.ruleConfigurationHash;
+  if (!previousHash || !currentHash) return 'unknown';
+  return previousHash === currentHash ? 'same' : 'changed';
 }
 
 function unknownDirectories(

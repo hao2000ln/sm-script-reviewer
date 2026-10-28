@@ -7,6 +7,7 @@ import {
   compareUatBaselines,
   createManifestTemplate,
   createUatBaseline,
+  renderVietnameseComparisonWarning,
   renderVietnameseSummary,
   type UatManifest,
 } from '../src/uat/baseline';
@@ -172,6 +173,73 @@ test('UAT comparison accounts for changed and removed source instead of calling 
     assert.ok(comparison.removedFindings.length > 0);
     assert.deepEqual(comparison.changedSourceFiles, ['changed.js', 'removed.js']);
     assert.equal(comparison.unmatchedPriorClassifications.length, 1);
+  });
+});
+
+test('UAT comparison marks matching rule configurations as same', async () => {
+  await withCorpus(async (root) => {
+    await source(root, 'one.js', 'function missing() { print("normal"); }');
+    const config = { rules: { 'SM-CMT-001': { options: { mode: 'all-functions' } } } } as const;
+    const previous = await createUatBaseline(root, { config });
+    const current = await createUatBaseline(root, { config });
+    const comparison = compareUatBaselines(previous, current);
+    assert.equal(comparison.configurationComparisonStatus, 'same');
+    assert.equal(comparison.configurationChanged, false);
+    assert.equal(renderVietnameseComparisonWarning(comparison), undefined);
+  });
+});
+
+test('UAT comparison warns when comment or print policy changes alter findings', async () => {
+  await withCorpus(async (root) => {
+    await source(root, 'one.js', `
+function topLevel() { print("normal"); }
+function outer() { function nested() {} }
+`);
+    const commentsAll = await createUatBaseline(root, {
+      config: { rules: { 'SM-CMT-001': { options: { mode: 'all-functions' } } } },
+    });
+    const commentsPublic = await createUatBaseline(root, {
+      config: { rules: { 'SM-CMT-001': { options: { mode: 'public-functions' } } } },
+    });
+    const commentComparison = compareUatBaselines(commentsAll, commentsPublic);
+    assert.equal(commentComparison.configurationComparisonStatus, 'changed');
+    assert.equal(commentComparison.configurationChanged, true);
+    assert.ok(commentComparison.removedFindings.length > 0);
+    assert.deepEqual(commentComparison.changedSourceFiles, []);
+
+    const printsAll = await createUatBaseline(root, {
+      config: { rules: { 'SM-DBG-001': { options: { mode: 'all-print' } } } },
+    });
+    const printsDebug = await createUatBaseline(root, {
+      config: { rules: { 'SM-DBG-001': { options: { mode: 'debug-patterns' } } } },
+    });
+    const printComparison = compareUatBaselines(printsAll, printsDebug);
+    assert.equal(printComparison.configurationComparisonStatus, 'changed');
+    assert.ok(printComparison.removedFindings.length > 0);
+    assert.match(renderVietnameseComparisonWarning(printComparison)!, /không được kết luận/u);
+  });
+});
+
+test('UAT comparison treats a legacy baseline without provenance as unknown and preserves manual labels', async () => {
+  await withCorpus(async (root) => {
+    await source(root, 'one.js', 'print("normal");');
+    const previous = await createUatBaseline(root, {
+      config: { rules: { 'SM-DBG-001': { options: { mode: 'all-print' } } } },
+    });
+    const labelled = {
+      ...previous,
+      findings: previous.findings.map((finding) => ({ ...finding, uatClassification: 'FALSE_POSITIVE' as const })),
+    };
+    const current = await createUatBaseline(root, {
+      config: { rules: { 'SM-DBG-001': { options: { mode: 'off' } } } },
+    });
+    const changed = compareUatBaselines(labelled, current);
+    assert.equal(changed.unmatchedPriorClassifications.length, 1);
+    const legacy = { ...labelled, schemaVersion: '1.0.0', provenance: undefined } as unknown as typeof previous;
+    const comparison = compareUatBaselines(legacy, current);
+    assert.equal(comparison.configurationComparisonStatus, 'unknown');
+    assert.equal(comparison.configurationChanged, false);
+    assert.match(renderVietnameseComparisonWarning(comparison)!, /không có ruleConfigurationHash/u);
   });
 });
 

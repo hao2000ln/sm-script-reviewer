@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "SM-CMT-001": {
+      "options": {
+        "mode": "public-functions"
+      }
+    },
+    "SM-DBG-001": {
+      "options": {
+        "mode": "debug-patterns"
+      }
+    }
+  }
+}

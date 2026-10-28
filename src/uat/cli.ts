@@ -6,6 +6,7 @@ import {
   compareUatBaselines,
   createManifestTemplate,
   createUatBaseline,
+  renderVietnameseComparisonWarning,
   renderVietnameseSummary,
   type UatBaselineReport,
   LEGACY_UAT_BASELINE_SCHEMA_VERSION,
@@ -57,7 +58,9 @@ export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
   process.stdout.write(`${renderVietnameseSummary(baseline)}\n`);
   if (options.previous) {
     const comparison = (report as typeof report & { comparison: ReturnType<typeof compareUatBaselines> }).comparison;
+    const warning = renderVietnameseComparisonWarning(comparison);
     process.stdout.write(`- So với baseline trước: mới=${comparison.newFindings.length}, mất=${comparison.removedFindings.length}, còn lại=${comparison.persistentFindings.length}, source thay đổi=${comparison.changedSourceFiles.length}.\n`);
+    if (warning) process.stdout.write(`- ${warning}\n`);
   }
   return 0;
 }

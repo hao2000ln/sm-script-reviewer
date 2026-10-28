@@ -118,6 +118,13 @@ Baseline JSON `groups` provides stable count tables by rule ID, file, severity,
 deterministic/heuristic classification, and UAT classification. Schema `1.2.0`
 adds these tables; comparison continues to accept `1.0.0` and `1.1.0` snapshots.
 
+When comparing snapshots, the report includes
+`configurationComparisonStatus: "same" | "changed" | "unknown"` and
+`configurationChanged`. A changed rule configuration, or a legacy snapshot
+without `provenance.ruleConfigurationHash`, produces a Vietnamese warning. In
+either case, `removedFindings` remains available for compatibility but must not
+be interpreted as source defects that were fixed.
+
 Example `./SM-UAT/uat-policy.json`:
 
 ```json
