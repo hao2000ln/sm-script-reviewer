@@ -53,6 +53,7 @@ Supported options:
 - `--format text|json|html` (default: `text`)
 - `--output <path>`
 - `--config <path>` for a JSON `RuleSetConfig`
+- `--preset default|v1-production` (default: `default`)
 - `--min-severity info|warning|error` (default: `warning`)
 - repeatable `--rule <rule-id>` report filter
 - repeatable `--exclude <glob>` discovery filter
@@ -87,6 +88,38 @@ Use `--preset default` to restore every built-in default rule (the CLI default),
 or pass `--config <path>` to explicitly override a single preset rule. The
 VS Code extension defaults to `v1-production` through
 `smReviewer.rulePreset`.
+
+## Cross-ScriptLibrary dependencies
+
+Dependency analysis is offline and AST-based. Runtime library identity is never
+guessed from a filename: provide an explicit mapping configuration before
+expecting resolved graph edges or missing-library findings.
+
+```bash
+npm run review -- dependencies ./SM-Exports/ScriptLibrary --config ./dependency-map.json --format html --output dependencies.html
+npm run review -- impact ./SM-Exports/ScriptLibrary --config ./dependency-map.json --changed ESD_Utils --format json
+```
+
+Supported static forms are `lib.LibraryName`, `lib.LibraryName.method()`, and
+`lib["LibraryName"]`. Computed names remain `DYNAMIC`; incomplete mappings
+produce `UNRESOLVED`, not `MISSING`. See
+[`docs/release-1.0.md`](docs/release-1.0.md) for mapping configuration,
+installation, rollback, supported syntax, and release limitations.
+
+## V1 evidence status
+
+- **Code review:** static contracts and release changes are subject to normal
+  independent review; they are not proof of SM runtime behavior.
+- **Automated verification:** build, unit, acceptance, extension, and VSIX
+  archive checks are recorded in the V1 audit.
+- **Real-corpus UAT:** the committed baseline is reproducible only where source
+  hashes still match. It must not be used to claim human true/false-positive
+  metrics without a versioned, owner-reviewed manifest.
+- **SM 9.8x runtime verification:** pending. Normal-VS-Code manual UAT is also
+  pending unless separately recorded by the project owner.
+
+See [`docs/reviews/v1-release-gap-audit.md`](docs/reviews/v1-release-gap-audit.md)
+for the exact evidence and pilot release gates.
 
 ## Offline UAT baseline
 
@@ -154,12 +187,13 @@ The architecture is documented in
 Sprint 3 Phase B status remains: **Static Code Review Approved — Independent
 Verification & SM 9.8x UAT Pending.**
 
-Latest local MVP verification (2026-10-27): `npm run build` passed, `npm test`
-passed 127/127 tests, and `node sprint2-acceptance.cjs` passed 17/17 cases. The
+Current reproducible release evidence, including its limitations, is recorded
+in [`docs/reviews/v1-release-gap-audit.md`](docs/reviews/v1-release-gap-audit.md).
 HTTP tests use localhost mocks and make no paid provider calls.
 
 ## Codex collaboration contract
-1. Work on a separate feature branch created by the project owner; never change production SM.
+1. The project owner manages all Git/GitHub history operations; Codex never creates
+   branches, commits, pushes, merges, rebases, or publishes. Never change production SM.
 2. Implement one bounded task at a time, with positive/negative/edge-case tests.
 3. Provide changed-file list, test results, assumptions, and known limitations.
 4. Request independent architecture/code review before merge.

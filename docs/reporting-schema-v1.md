@@ -12,6 +12,7 @@
 | `generatedAt` | UTC ISO-8601 report generation timestamp. |
 | `toolVersion` | Reviewer package version. |
 | `inputPath` | Resolved file or directory supplied to the review command. |
+| `reviewPreset` | Active CLI review preset (`default` or `v1-production`). This is additive metadata and does not alter finding fingerprints. |
 | `failureThreshold` | Minimum reported severity and exit-code threshold. |
 | `summary` | Counts for files, findings, diagnostics, skipped rules, rule errors, file failures, and known skipped files. |
 | `files` | Stable path-ordered file summaries and source hashes. |

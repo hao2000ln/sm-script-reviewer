@@ -27,7 +27,7 @@ nested VSIX files.
 ## Manual normal-VS-Code installation UAT
 
 1. In a normal VS Code instance, run **Extensions: Install from VSIX...**.
-2. Select `vscode-extension/sm-scriptlibrary-reviewer-0.1.0.vsix`.
+2. Select `vscode-extension/sm-scriptlibrary-reviewer-1.0.0.vsix`.
 3. Reload VS Code when prompted; do not use Extension Development Host for this
    verification.
 4. Open an unsaved `.js` and ScriptLibrary `.txt` file. Run **SM Reviewer:
@@ -47,7 +47,7 @@ nested VSIX files.
   that VS Code satisfies engine `^1.95.0`.
 - Do not configure a production AI key for mock UAT.
 - Production provider UAT remains postponed due to `credit_balance_exhausted`.
-- Version remains `0.1.0`; owner approval is required before changing version,
+- Version is `1.0.0`; owner approval is required before changing version,
   publisher, licensing, Marketplace publication, or GitHub release.
 - Manual installation is a required owner/independent-review step and is not
   replaced by archive inspection.

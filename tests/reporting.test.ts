@@ -32,8 +32,9 @@ test('JSON report is versioned, filtered, deterministic, and preserves fingerpri
     const direct = review(await loadSource(sourcePath));
 
     assert.equal(report.schemaVersion, '1.0.0');
-    assert.equal(report.toolVersion, '0.1.0');
+    assert.equal(report.toolVersion, '1.0.0');
     assert.equal(report.inputPath, resolve(root));
+    assert.equal(report.reviewPreset, 'default');
     assert.ok(Number.isFinite(Date.parse(report.generatedAt)));
     assert.equal(report.failureThreshold, 'warning');
     assert.equal(report.summary.files, 1);
@@ -91,11 +92,18 @@ test('v1-production preset suppresses quality-policy findings and accepts explic
     ]);
     const focused = runReview(sourcePath, '--format', 'json', '--preset', 'v1-production');
     assert.equal(focused.status, 0);
-    assert.equal((JSON.parse(focused.stdout) as ReviewReport).summary.findings, 0);
+    const focusedReport = JSON.parse(focused.stdout) as ReviewReport;
+    assert.equal(focusedReport.summary.findings, 0);
+    assert.equal(focusedReport.reviewPreset, 'v1-production');
+    const focusedText = runReview(sourcePath, '--format', 'text', '--preset', 'v1-production');
+    assert.equal(focusedText.status, 0);
+    assert.match(focusedText.stdout, /^Preset: v1-production/mu);
 
     const override = runReview(sourcePath, '--format', 'json', '--preset', 'v1-production', '--config', configPath);
     assert.equal(override.status, 1);
-    assert.deepEqual((JSON.parse(override.stdout) as ReviewReport).findings.map(({ ruleId }) => ruleId), ['SM-DBG-001']);
+    const overrideReport = JSON.parse(override.stdout) as ReviewReport;
+    assert.equal(overrideReport.reviewPreset, 'v1-production');
+    assert.deepEqual(overrideReport.findings.map(({ ruleId }) => ruleId), ['SM-DBG-001']);
     assert.equal(runReview(sourcePath, '--preset', 'unknown').status, 2);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -114,6 +122,7 @@ test('HTML report is standalone, escaped, filterable, and supports output files'
     const html = await readFile(outputPath, 'utf8');
 
     assert.match(html, /^<!doctype html>/u);
+    assert.match(html, /Preset: default/u);
     assert.match(html, /id="severity-filter"/u);
     assert.match(html, /id="rule-filter"/u);
     assert.match(html, /a&amp;b\.js/u);

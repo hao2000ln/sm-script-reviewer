@@ -1,6 +1,7 @@
 import { discoverSources, loadSource } from '../source/loader';
 import { analyze } from '../parser/analyze';
 import { REVIEW_USAGE, runReviewCommand } from './review-command';
+import { DEPENDENCY_USAGE, runDependencyCommand } from './dependency-command';
 
 async function main() {
   const [command, target, ...args] = process.argv.slice(2);
@@ -11,6 +12,19 @@ async function main() {
   if (command === 'review' && target) {
     try {
       process.exitCode = await runReviewCommand(target, args);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 2;
+    }
+    return;
+  }
+  if ((command === 'dependencies' || command === 'impact') && (target === '--help' || target === '-h')) {
+    console.log(DEPENDENCY_USAGE);
+    return;
+  }
+  if ((command === 'dependencies' || command === 'impact') && target) {
+    try {
+      process.exitCode = await runDependencyCommand(command, target, args);
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 2;

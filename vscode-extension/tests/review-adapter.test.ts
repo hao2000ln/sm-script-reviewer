@@ -9,6 +9,7 @@ import {
 } from '../src/review-adapter';
 import { ReviewLifecycle, shouldReviewOnSave } from '../src/review-lifecycle';
 import { resolveReviewPreset } from '../../src/reviewer/presets';
+import { review } from '../../src/reviewer/review';
 
 test('maps static severity to VS Code diagnostic severity', () => {
   assert.equal(toEditorSeverity('critical'), 'error');
@@ -156,6 +157,22 @@ test('supports the shared V1 production preset without a separate extension rule
   assert.equal(reviewed.supported, true);
   if (!reviewed.supported) return;
   assert.equal(reviewed.diagnostics.length, 0);
+});
+
+test('matches core V1 preset findings used by the CLI', () => {
+  const config = resolveReviewPreset('v1-production');
+  const reviewed = reviewInMemoryDocument({
+    uri: 'file:///v1-sm.js', fileName: 'v1-sm.js', languageId: 'javascript',
+    text: 'var file = new SCFile("contacts"); file.doDelete();', version: 1,
+  }, config);
+  assert.equal(reviewed.supported, true);
+  if (!reviewed.supported) return;
+  const core = review(reviewed.source, config);
+  assert.deepEqual(
+    reviewed.diagnostics.map(({ code }) => code),
+    core.findings.map(({ ruleId }) => ruleId),
+  );
+  assert.deepEqual(core.findings.map(({ ruleId }) => ruleId), ['SM-RC-001']);
 });
 
 test('reports parse diagnostics separately with a zero-length range', () => {

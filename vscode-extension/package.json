@@ -2,7 +2,7 @@
   "name": "sm-scriptlibrary-reviewer",
   "displayName": "SM ScriptLibrary Reviewer",
   "description": "Read-only static and explicitly consented AI review for OpenText/HPE Service Manager ScriptLibrary source.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "publisher": "hao2000ln",
   "repository": {
     "type": "git",
@@ -45,7 +45,12 @@
         "title": "SM Reviewer: Clear AI API Key"
       },
       { "command": "smReviewer.reviewFolder", "title": "SM Reviewer: Review Folder" },
-      { "command": "smReviewer.clearFolderReviewResults", "title": "SM Reviewer: Clear Folder Review Results" }
+      { "command": "smReviewer.clearFolderReviewResults", "title": "SM Reviewer: Clear Folder Review Results" },
+      { "command": "smReviewer.analyzeDependencies", "title": "SM Reviewer: Analyze ScriptLibrary Dependencies" },
+      { "command": "smReviewer.showDirectDependencies", "title": "SM Reviewer: Show Direct Dependencies" },
+      { "command": "smReviewer.showReverseDependencies", "title": "SM Reviewer: Show Reverse Dependencies" },
+      { "command": "smReviewer.showDependencyCycles", "title": "SM Reviewer: Show Dependency Cycles" },
+      { "command": "smReviewer.analyzeImpact", "title": "SM Reviewer: Analyze Dependency Impact" }
     ],
     "configuration": {
       "title": "SM Reviewer",
@@ -68,6 +73,11 @@
           "enum": ["v1-production", "default"],
           "default": "v1-production",
           "description": "Static rule preset. v1-production prioritizes SM SCFile, return-code, and query-loop risks; default restores all built-in default rules."
+        },
+        "smReviewer.dependencies.config": {
+          "type": "object",
+          "default": { "corpusComplete": false, "mappingsComplete": false, "libraryMappings": [] },
+          "description": "Explicit dependency mapping configuration. Filename inference is never used; MISSING requires corpusComplete and mappingsComplete."
         },
         "smReviewer.ai.enabled": {
           "type": "boolean",
@@ -102,8 +112,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/vscode-extension/tests/*.test.js",
     "prepare:package": "npm run build && node scripts/prepare-package.cjs",
-    "package": "npm run prepare:package && vsce package --out sm-scriptlibrary-reviewer-0.1.0.vsix",
-    "inspect:vsix": "node ../uat/sprint5c/inspect-vsix.cjs sm-scriptlibrary-reviewer-0.1.0.vsix"
+    "package": "npm run prepare:package && vsce package --out sm-scriptlibrary-reviewer-1.0.0.vsix",
+    "inspect:vsix": "node ../uat/sprint5c/inspect-vsix.cjs sm-scriptlibrary-reviewer-1.0.0.vsix"
   },
   "dependencies": {
     "typescript": "^5.9.3"

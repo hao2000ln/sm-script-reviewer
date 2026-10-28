@@ -82,6 +82,7 @@ export async function runReviewCommand(target: string, args: readonly string[]):
     minSeverity: options.minSeverity,
     ruleIds: options.ruleIds.length > 0 ? options.ruleIds : undefined,
     inputPath: resolve(target),
+    reviewPreset: options.preset,
     ...(ai ? { ai } : {}),
   });
   const rendered = renderReport(report, options.format);

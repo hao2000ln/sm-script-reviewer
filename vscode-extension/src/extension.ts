@@ -15,6 +15,11 @@ import {
 } from './review-adapter';
 import { ReviewLifecycle, shouldReviewOnSave } from './review-lifecycle';
 import { reviewFolder } from './folder-review-adapter';
+import { analyzeDependencyFolder } from './dependency-adapter';
+import { calculateImpact } from '../../src/dependencies/graph';
+import { renderDependencyText, type DependencyReport } from '../../src/dependencies/report';
+import type { DependencyAnalysisConfig, DependencyAnalysisResult } from '../../src/dependencies/types';
+import { TOOL_VERSION } from '../../src/core/version';
 import { localizeDiagnostic, localizeRuleMetadata, resolveLanguage } from './localization';
 
 const DIAGNOSTIC_SOURCE = 'SM Reviewer';
@@ -35,6 +40,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('smReviewer.clearAiApiKey', () => controller.clearAiApiKey()),
     vscode.commands.registerCommand('smReviewer.reviewFolder', (uri?: vscode.Uri) => controller.reviewFolder(uri)),
     vscode.commands.registerCommand('smReviewer.clearFolderReviewResults', () => controller.clearFolderResults()),
+    vscode.commands.registerCommand('smReviewer.analyzeDependencies', (uri?: vscode.Uri) => controller.analyzeDependencies(uri)),
+    vscode.commands.registerCommand('smReviewer.showDirectDependencies', () => controller.showDependencies(false)),
+    vscode.commands.registerCommand('smReviewer.showReverseDependencies', () => controller.showDependencies(true)),
+    vscode.commands.registerCommand('smReviewer.showDependencyCycles', () => controller.showCycles()),
+    vscode.commands.registerCommand('smReviewer.analyzeImpact', () => controller.analyzeImpact()),
     vscode.languages.registerHoverProvider([{ language: 'javascript' }, { pattern: '**/*.txt' }], controller),
     vscode.workspace.onDidChangeTextDocument((event) => controller.invalidateAIForEdit(event.document.uri)),
     vscode.workspace.onDidSaveTextDocument((document) => void controller.reviewOnSave(document)),
@@ -55,6 +65,8 @@ class ExtensionReviewController implements vscode.HoverProvider {
   readonly #aiControllers = new Map<string, AbortController>();
   readonly #presentations = new Map<string, readonly ReviewDiagnosticData[]>();
   #folderGeneration = 0;
+  #dependencyAnalysis: DependencyAnalysisResult | undefined;
+  #dependencyRoot: string | undefined;
 
   constructor(
     private readonly api: typeof vscode,
@@ -94,11 +106,49 @@ class ExtensionReviewController implements vscode.HoverProvider {
         this.folderCollection.set(uri, diagnostics.map((item) => toVsCodeDiagnostic(this.api, uri, item, 'SM Reviewer Folder')));
       }
       const incomplete = result.limited ? ' Incomplete: file limit reached.' : '';
-      void this.api.window.showInformationMessage(`SM Reviewer: folder review ${result.files.length} files, ${findingCount} findings, ${warnings} warnings, ${errors} errors, ${result.failures.length} failures, ${result.skippedFileCount} skipped.${incomplete}`);
+      void this.api.window.showInformationMessage(`SM Reviewer [${this.reviewPreset()}]: folder review ${result.files.length} files, ${findingCount} findings, ${warnings} warnings, ${errors} errors, ${result.failures.length} failures, ${result.skippedFileCount} skipped.${incomplete}`);
     });
   }
 
   clearFolderResults(): void { this.#folderGeneration += 1; this.folderCollection.clear(); }
+
+  async analyzeDependencies(contextUri?: vscode.Uri): Promise<void> {
+    const folder = contextUri ?? (await this.api.window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Analyze dependencies' }))?.[0];
+    if (!folder) return;
+    const snapshots = new Map<string, string>();
+    for (const document of this.api.workspace.textDocuments) if (document.isDirty && isSupportedDocument({ fileName: document.fileName, languageId: document.languageId })) snapshots.set(document.fileName.toLowerCase(), document.getText());
+    const result = await analyzeDependencyFolder(folder.fsPath, { config: this.dependencyConfig(), maxFiles: this.setting<number>('folderReview.maxFiles'), openDocuments: snapshots });
+    if (result.cancelled) return;
+    this.#dependencyAnalysis = result.analysis; this.#dependencyRoot = folder.fsPath;
+    const report: DependencyReport = { schemaVersion: '1.0.0', generatedAt: new Date().toISOString(), toolVersion: TOOL_VERSION, analysis: result.analysis };
+    this.output.appendLine(renderDependencyText(report)); this.output.show(true);
+    void this.api.window.showInformationMessage(`SM Reviewer: dependencies ${result.analysis.graph.nodes.length} libraries, ${result.analysis.graph.edges.length} resolved references${result.limited ? ' (incomplete: file limit)' : ''}.`);
+  }
+
+  async showDependencies(reverse: boolean): Promise<void> {
+    const active = this.api.window.activeTextEditor?.document;
+    if (!active || !this.#dependencyAnalysis || !this.#dependencyRoot) { void this.api.window.showInformationMessage('SM Reviewer: run Analyze ScriptLibrary Dependencies first.'); return; }
+    const filePath = active.fileName.replace(this.#dependencyRoot, '').replace(/^[/\\]/u, '').replaceAll('\\', '/');
+    const node = this.#dependencyAnalysis.graph.nodes.find((item) => item.filePath === filePath);
+    if (!node) { void this.api.window.showInformationMessage('SM Reviewer: active document is outside the analyzed dependency folder.'); return; }
+    const values = this.#dependencyAnalysis.graph.edges.filter((edge) => reverse ? edge.toNodeId === node.id : edge.fromNodeId === node.id)
+      .map((edge) => reverse ? edge.fromNodeId : edge.toNodeId);
+    void this.api.window.showInformationMessage(`SM Reviewer: ${reverse ? 'reverse' : 'direct'} dependencies for ${node.libraryName ?? node.filePath}: ${values.join(', ') || 'none'}.`);
+  }
+
+  showCycles(): void {
+    if (!this.#dependencyAnalysis) { void this.api.window.showInformationMessage('SM Reviewer: run Analyze ScriptLibrary Dependencies first.'); return; }
+    const cycles = this.#dependencyAnalysis.graph.cycles.map((cycle) => cycle.join(' -> '));
+    void this.api.window.showInformationMessage(`SM Reviewer: dependency cycles: ${cycles.join('; ') || 'none'}.`);
+  }
+
+  async analyzeImpact(): Promise<void> {
+    if (!this.#dependencyAnalysis) { void this.api.window.showInformationMessage('SM Reviewer: run Analyze ScriptLibrary Dependencies first.'); return; }
+    const value = await this.api.window.showInputBox({ prompt: 'Changed ScriptLibrary names, comma-separated' });
+    if (!value) return;
+    const impact = calculateImpact(this.#dependencyAnalysis.graph, value.split(',').map((item) => item.trim()).filter(Boolean));
+    void this.api.window.showInformationMessage(`SM Reviewer: impact direct=${impact.directDependents.join(',') || 'none'} indirect=${impact.indirectDependents.join(',') || 'none'}.`);
+  }
 
   async aiReviewActiveDocument(): Promise<void> {
     const document = this.api.window.activeTextEditor?.document;
@@ -240,7 +290,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
     this.publish(document.uri, reviewed);
     if (manual) {
       void this.api.window.showInformationMessage(
-        `SM Reviewer: ${reviewed.diagnostics.length} diagnostic(s) found.`,
+        `SM Reviewer [${this.reviewPreset()}]: ${reviewed.diagnostics.length} diagnostic(s) found.`,
       );
     }
   }
@@ -336,8 +386,16 @@ class ExtensionReviewController implements vscode.HoverProvider {
   }
 
   private reviewConfig() {
+    return resolveReviewPreset(this.reviewPreset());
+  }
+
+  private reviewPreset() {
     const configured = this.setting<string>('rulePreset');
-    return resolveReviewPreset(isReviewPreset(configured) ? configured : 'v1-production');
+    return isReviewPreset(configured) ? configured : 'v1-production';
+  }
+
+  private dependencyConfig(): DependencyAnalysisConfig {
+    return this.setting<DependencyAnalysisConfig>('dependencies.config') ?? {};
   }
 
   private language() { return resolveLanguage(this.setting('language') as 'vi' | 'en' | 'auto', this.api.env.language); }

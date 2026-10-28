@@ -61,6 +61,7 @@ export function renderHtmlReport(report: ReviewReport): string {
 <body>
   <h1>SM ScriptLibrary Review</h1>
   <div class="summary">
+    <span>Preset: ${escapeHtml(report.reviewPreset)}</span>
     <span>Files: ${report.summary.files}</span><span>Findings: ${report.summary.findings}</span>
     <span>Diagnostics: ${report.summary.diagnostics}</span><span>Failures: ${report.summary.failures}</span>
     <span>Skipped files: ${report.summary.skippedFiles}</span>

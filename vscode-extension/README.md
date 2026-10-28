@@ -98,7 +98,7 @@ npm run package
 npm run inspect:vsix
 ```
 
-The resulting artifact is `sm-scriptlibrary-reviewer-0.1.0.vsix`. Install it in
+The resulting artifact is `sm-scriptlibrary-reviewer-1.0.0.vsix`. Install it in
 a normal VS Code instance with **Extensions: Install from VSIX...**, then reload
 when prompted. The package is standalone: it contains compiled extension/core
 modules and the TypeScript Compiler API runtime, but excludes TypeScript source,

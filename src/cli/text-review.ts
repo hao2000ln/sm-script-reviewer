@@ -1,7 +1,7 @@
 import type { ReviewReport } from '../reporting/report';
 
 export function renderTextReview(report: ReviewReport): string {
-  const lines: string[] = [];
+  const lines: string[] = [`Preset: ${report.reviewPreset}`];
   for (const file of report.files) {
     lines.push(file.filePath);
     const findings = report.findings.filter(({ filePath }) => filePath === file.filePath);

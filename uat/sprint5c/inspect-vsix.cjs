@@ -5,7 +5,7 @@ const { resolve } = require('node:path');
 const { readFileSync } = require('node:fs');
 const { inflateRawSync } = require('node:zlib');
 
-const archive = resolve(process.argv[2] || 'vscode-extension/sm-scriptlibrary-reviewer-0.1.0.vsix');
+const archive = resolve(process.argv[2] || 'vscode-extension/sm-scriptlibrary-reviewer-1.0.0.vsix');
 const zip = readFileSync(archive);
 const entriesByName = readZipEntries(zip);
 const entries = [...entriesByName.keys()].sort();
@@ -31,7 +31,7 @@ assert.deepEqual(forbidden, [], `Unexpected files in VSIX:\n${forbidden.join('\n
 
 const manifest = JSON.parse(readZipEntry(zip, entriesByName.get('extension/package.json')));
 assert.equal(manifest.main, './dist/vscode-extension/src/extension.js');
-assert.equal(manifest.version, '0.1.0');
+assert.equal(manifest.version, '1.0.0');
 assert.ok(manifest.contributes.commands.some((command) => command.command === 'smReviewer.reviewCurrentFile'));
 assert.ok(manifest.contributes.commands.some((command) => command.command === 'smReviewer.aiReviewCurrentFile'));
 assert.ok(manifest.contributes.commands.some((command) => command.command === 'smReviewer.reviewFolder'));

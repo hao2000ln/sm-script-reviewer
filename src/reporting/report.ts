@@ -19,6 +19,8 @@ export const REVIEW_REPORT_SCHEMA_VERSION = '1.0.0';
 export interface ReviewReportOptions {
   readonly minSeverity?: RuleSeverity;
   readonly ruleIds?: readonly string[];
+  /** Additive report metadata; it does not affect rule execution identity. */
+  readonly reviewPreset?: string;
   readonly generatedAt?: string;
   readonly inputPath?: string;
   readonly ai?: AIReviewRunResult;
@@ -54,6 +56,7 @@ export interface ReviewReport {
   readonly generatedAt: string;
   readonly toolVersion: string;
   readonly inputPath: string;
+  readonly reviewPreset: string;
   readonly failureThreshold: RuleSeverity;
   readonly summary: {
     readonly files: number;
@@ -132,6 +135,7 @@ export function createReviewReport(
     generatedAt: options.generatedAt ?? new Date().toISOString(),
     toolVersion: TOOL_VERSION,
     inputPath: options.inputPath ?? '',
+    reviewPreset: options.reviewPreset ?? 'default',
     failureThreshold,
     summary: {
       files: files.length,
