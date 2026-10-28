@@ -28,8 +28,9 @@ the requested `doRemove` must not be silently substituted for it.
 
 | IDs | Decision | Evidence / limits / priority |
 |---|---|---|
-| SM-SCF-001..005 | CONDITIONAL | Versioned constructor/READONLY and direct write-method contracts are now catalogued. A future rule may cover only direct/one-hop objects and verified `doInsert`/`doUpdate`/`doDelete`; target SM 9.8x UAT and severity approval remain required. |
-| SM-SCF-006 | CONDITIONAL | 9.80 `setFields(string|string-array|none)` and reset semantics are catalogued. Direct known-READWRITE use and literal invalid forms are candidates only after policy approval; dynamic fields and DBDICT validation remain blocked. |
+| SM-SCF-001 | IMPLEMENTED P0 | READONLY direct/one-hop `doInsert`/`doUpdate`/`doDelete` is an error when constructor mode is verified. Target SM 9.8x UAT remains required. |
+| SM-SCF-002..004 | IMPLEMENTED P0 | `setFields` on verified READWRITE is warning; statically proven `setFields` and constructor argument violations are errors. Dynamic values remain suppressed. |
+| SM-SCF-005..006 | BLOCKED | Field-access/selection and deeper API behavior need DBDICT, runtime, and project-policy evidence. |
 | SM-SCF-007..010 | BLOCKED | Require proven field-selection semantics, schema and performance policy; READONLY without `setFields` is never an error by itself. |
 | SM-SCF-011 | CONDITIONAL | Still only against an expanded versioned official method catalog and confirmed direct SCFile bindings. Custom wrappers/dynamic members excluded; `doRemove` remains target-unverified. |
 | SM-SCF-012 | BLOCKED | Need verified per-method signatures/overloads. |

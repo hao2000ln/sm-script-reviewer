@@ -13,6 +13,10 @@ test('localizes dynamic comment, debug, and loop findings into Vietnamese', () =
   assert.match(localizeDiagnostic(diagnostic('SM-CMT-001', 'Function "loadContacts" has no leading comment.'), 'vi').message, /loadContacts/u);
   assert.match(localizeDiagnostic(diagnostic('SM-DBG-001', 'Remove direct print() debug output from production code.'), 'vi').message, /debug/u);
   assert.match(localizeDiagnostic(diagnostic('SM-LOOP-002', 'loop'), 'vi').message, /getNext/u);
+  assert.match(localizeDiagnostic(diagnostic('SM-SCF-001', 'write'), 'vi').message, /SCFILE_READONLY/u);
+  assert.match(localizeDiagnostic(diagnostic('SM-SCF-002', 'mode'), 'vi').message, /setFields/u);
+  assert.match(localizeDiagnostic(diagnostic('SM-SCF-003', 'args'), 'vi').message, /setFields/u);
+  assert.match(localizeDiagnostic(diagnostic('SM-SCF-004', 'constructor'), 'vi').message, /constructor/u);
 });
 test('keeps English and unknown translations unchanged', () => {
   const unknown = diagnostic('SM-X-001', 'Original message');

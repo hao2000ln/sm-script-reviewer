@@ -45,6 +45,27 @@ test('does not treat a deferred closure over an outer SCFile as executed state',
   assert.ok(result.unsupported.some((message) => message.includes('interprocedural')));
 });
 
+test('merges mutually exclusive setFields selections conservatively', () => {
+  const different = analyze(`
+var f = new SCFile('contacts', SCFILE_READONLY);
+if (condition) { f.setFields(['contact.name']); } else { f.setFields(['phone']); }
+`);
+  const onePath = analyze(`
+var f = new SCFile('contacts', SCFILE_READONLY);
+if (condition) { f.setFields(['contact.name']); }
+`);
+  const same = analyze(`
+var f = new SCFile('contacts', SCFILE_READONLY);
+if (condition) { f.setFields(['contact.name']); } else { f.setFields(['contact.name']); }
+`);
+  assert.equal(different.objects[0].selectedFields.kind, 'unknown');
+  assert.equal(onePath.objects[0].selectedFields.kind, 'unknown');
+  assert.deepEqual(same.objects[0].selectedFields, {
+    kind: 'selected-fields', fields: ['contact.name'],
+    range: same.objects[0].selectedFields.range, evidenceId: same.objects[0].selectedFields.evidenceId,
+  });
+});
+
 test('SCFile acceptance fixtures declare all requested categories without emitting diagnostics', () => {
   assert.equal(SCFILE_CONTRACT_FIXTURES.length, 16);
   assert.ok(SCFILE_CONTRACT_FIXTURES.some(({ name, classification }) => name === 'readonly-remove' && classification === 'unknown'));

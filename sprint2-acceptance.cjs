@@ -67,7 +67,11 @@ const tests = [
         "SM-DBG-001",
         "SM-LOOP-001",
         "SM-LOOP-002",
-        "SM-RC-001"
+        "SM-RC-001",
+        "SM-SCF-001",
+        "SM-SCF-002",
+        "SM-SCF-003",
+        "SM-SCF-004"
       ]
     );
     assert.deepEqual(

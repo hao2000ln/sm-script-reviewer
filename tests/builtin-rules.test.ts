@@ -87,6 +87,10 @@ test('built-in rules do not run on syntax-invalid source', () => {
     { ruleId: 'SM-LOOP-001', reason: 'syntax-errors' },
     { ruleId: 'SM-LOOP-002', reason: 'syntax-errors' },
     { ruleId: 'SM-RC-001', reason: 'syntax-errors' },
+    { ruleId: 'SM-SCF-001', reason: 'syntax-errors' },
+    { ruleId: 'SM-SCF-002', reason: 'syntax-errors' },
+    { ruleId: 'SM-SCF-003', reason: 'syntax-errors' },
+    { ruleId: 'SM-SCF-004', reason: 'syntax-errors' },
   ]);
 });
 

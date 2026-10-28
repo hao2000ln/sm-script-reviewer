@@ -57,12 +57,15 @@ flow, nested reference, and target-incomplete `doRemove`. Each fixture is
 classified as confirmed-valid, confirmed-invalid, contract-dependent, or
 unknown; classifications do not cause findings.
 
-Ready for a separately approved next phase:
+Implemented in the approved P0 rule phase (with 9.8x UAT still required):
 
 - `SM-SCF-001` READONLY write calls, limited to direct/one-hop tracked objects
   and verified `doInsert`, `doUpdate`, `doDelete`.
-- `SM-SCF-006` `setFields` on known READWRITE objects and known invalid literal
-  argument forms, after severity and policy approval.
+- `SM-SCF-002` `setFields` on known READWRITE objects; `SM-SCF-003` proven
+  invalid `setFields` argument forms; `SM-SCF-004` proven constructor forms.
+
+The P0 implementation, exact severity policy, and regression matrix are in
+[`scfile-p0-rules-implementation.md`](scfile-p0-rules-implementation.md).
 
 Not ready: field access after `setFields`, DBDICT validation, dynamic modes,
 `doRemove`, lifecycle/`doClose`, wrappers, and full branch/function flow.
