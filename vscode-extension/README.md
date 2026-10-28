@@ -39,6 +39,22 @@ then run **SM Reviewer: Review Current File** from the Command Palette.
 
 ## Manual UAT
 
+## Vietnamese and folder review
+
+`smReviewer.language` defaults to `vi`; choose `en` for original core English
+or `auto` to follow the VS Code UI language. Translation affects only editor
+presentation; rule IDs, source ranges, fingerprints, and core English results
+remain unchanged. Unknown templates fall back to English.
+
+Use **SM Reviewer: Review Folder** from Explorer or the Command Palette. It
+reviews saved `.js`/`.txt` files recursively with existing exclusions, plus
+`smReviewer.folderReview.exclude` and `smReviewer.folderReview.maxFiles`
+(default 1000). Dirty open documents use their current editor text; other files
+use disk content. The folder summary warns when the limit makes coverage
+incomplete. Folder review is static-only and has its own diagnostics collection;
+**Clear Folder Review Results** does not clear file or AI diagnostics. See
+[`../uat/sprint5d/README.md`](../uat/sprint5d/README.md).
+
 ## AI review setup and privacy
 
 - Command: **SM Reviewer: AI Review Current File** (`smReviewer.aiReviewCurrentFile`).

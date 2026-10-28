@@ -10,8 +10,11 @@ import {
   type InMemoryReviewResult,
   type ReviewDiagnosticData,
   toEditorRange,
+  toReviewDiagnostics,
 } from './review-adapter';
 import { ReviewLifecycle, shouldReviewOnSave } from './review-lifecycle';
+import { reviewFolder } from './folder-review-adapter';
+import { localizeDiagnostic, localizeRuleMetadata, resolveLanguage } from './localization';
 
 const DIAGNOSTIC_SOURCE = 'SM Reviewer';
 const AI_DIAGNOSTIC_SOURCE = 'SM Reviewer AI';
@@ -23,11 +26,14 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     controller.collection,
     controller.aiCollection,
+    controller.folderCollection,
     controller.output,
     vscode.commands.registerCommand('smReviewer.reviewCurrentFile', () => controller.reviewActiveDocument()),
     vscode.commands.registerCommand('smReviewer.aiReviewCurrentFile', () => controller.aiReviewActiveDocument()),
     vscode.commands.registerCommand('smReviewer.setAiApiKey', () => controller.setAiApiKey()),
     vscode.commands.registerCommand('smReviewer.clearAiApiKey', () => controller.clearAiApiKey()),
+    vscode.commands.registerCommand('smReviewer.reviewFolder', (uri?: vscode.Uri) => controller.reviewFolder(uri)),
+    vscode.commands.registerCommand('smReviewer.clearFolderReviewResults', () => controller.clearFolderResults()),
     vscode.languages.registerHoverProvider([{ language: 'javascript' }, { pattern: '**/*.txt' }], controller),
     vscode.workspace.onDidChangeTextDocument((event) => controller.invalidateAIForEdit(event.document.uri)),
     vscode.workspace.onDidSaveTextDocument((document) => void controller.reviewOnSave(document)),
@@ -41,11 +47,13 @@ export function deactivate(): void {}
 class ExtensionReviewController implements vscode.HoverProvider {
   readonly collection: vscode.DiagnosticCollection;
   readonly aiCollection: vscode.DiagnosticCollection;
+  readonly folderCollection: vscode.DiagnosticCollection;
   readonly output: vscode.OutputChannel;
   readonly #lifecycle = new ReviewLifecycle();
   readonly #aiLifecycle = new ReviewLifecycle();
   readonly #aiControllers = new Map<string, AbortController>();
   readonly #presentations = new Map<string, readonly ReviewDiagnosticData[]>();
+  #folderGeneration = 0;
 
   constructor(
     private readonly api: typeof vscode,
@@ -53,6 +61,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
   ) {
     this.collection = api.languages.createDiagnosticCollection('smReviewer');
     this.aiCollection = api.languages.createDiagnosticCollection('smReviewerAI');
+    this.folderCollection = api.languages.createDiagnosticCollection('smReviewerFolder');
     this.output = api.window.createOutputChannel('SM Reviewer AI');
   }
 
@@ -64,6 +73,31 @@ class ExtensionReviewController implements vscode.HoverProvider {
     }
     await this.reviewDocument(document, true);
   }
+
+  async reviewFolder(contextUri?: vscode.Uri): Promise<void> {
+    const folder = contextUri ?? (await this.api.window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Review Folder' }))?.[0];
+    if (!folder) return;
+    const maxFiles = this.setting<number>('folderReview.maxFiles');
+    const excludedPatterns = this.setting<readonly string[]>('folderReview.exclude') ?? [];
+    const generation = ++this.#folderGeneration;
+    const snapshots = new Map<string, string>();
+    for (const document of this.api.workspace.textDocuments) if (document.isDirty && isSupportedDocument({ fileName: document.fileName, languageId: document.languageId })) snapshots.set(document.fileName.toLowerCase(), document.getText());
+    await this.api.window.withProgress({ location: this.api.ProgressLocation.Notification, title: 'SM Reviewer: reviewing folder', cancellable: true }, async (progress, token) => {
+      const result = await reviewFolder(folder.fsPath, { maxFiles, excludedPatterns, openDocuments: snapshots, isCancellationRequested: () => token.isCancellationRequested, onProgress: (done, total) => progress.report({ increment: total ? 100 / total : 0, message: `${done}/${total}` }) });
+      if (generation !== this.#folderGeneration || result.cancelled) return;
+      this.folderCollection.clear();
+      let findingCount = 0; let warnings = 0; let errors = 0;
+      for (const file of result.files) {
+        const uri = this.api.Uri.file(file.filePath); const diagnostics = toReviewDiagnostics(file.result).map((item) => this.localized(item));
+        findingCount += diagnostics.length; warnings += diagnostics.filter(({ severity }) => severity === 'warning').length; errors += diagnostics.filter(({ severity }) => severity === 'error').length;
+        this.folderCollection.set(uri, diagnostics.map((item) => toVsCodeDiagnostic(this.api, uri, item, 'SM Reviewer Folder')));
+      }
+      const incomplete = result.limited ? ' Incomplete: file limit reached.' : '';
+      void this.api.window.showInformationMessage(`SM Reviewer: folder review ${result.files.length} files, ${findingCount} findings, ${warnings} warnings, ${errors} errors, ${result.failures.length} failures, ${result.skippedFileCount} skipped.${incomplete}`);
+    });
+  }
+
+  clearFolderResults(): void { this.#folderGeneration += 1; this.folderCollection.clear(); }
 
   async aiReviewActiveDocument(): Promise<void> {
     const document = this.api.window.activeTextEditor?.document;
@@ -147,6 +181,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
     this.#lifecycle.clear(uri.toString());
     this.#presentations.delete(uri.toString());
     this.collection.delete(uri);
+    this.folderCollection.delete(uri);
     this.clearAI(uri);
   }
 
@@ -174,7 +209,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
     const entry = entries.find(({ range }) => contains(range, position));
     if (!entry) return undefined;
     const markdown = new this.api.MarkdownString();
-    const metadata = ruleRegistry.get(entry.code)?.metadata;
+    const metadata = localizeRuleMetadata(ruleRegistry.get(entry.code)?.metadata, this.language());
     if (metadata) {
       markdown.appendMarkdown(`**${entry.code}: ${metadata.title}**\n\n${metadata.description}\n\n`);
     }
@@ -270,8 +305,10 @@ class ExtensionReviewController implements vscode.HoverProvider {
       this.clear(uri);
       return;
     }
-    this.#presentations.set(uri.toString(), reviewed.diagnostics);
-    this.collection.set(uri, reviewed.diagnostics.map((item) => toVsCodeDiagnostic(this.api, uri, item)));
+    const diagnostics = reviewed.diagnostics.map((item) => this.localized(item));
+    this.#presentations.set(uri.toString(), diagnostics);
+    this.folderCollection.delete(uri);
+    this.collection.set(uri, diagnostics.map((item) => toVsCodeDiagnostic(this.api, uri, item)));
   }
 
   private clearAI(uri: vscode.Uri): void {
@@ -296,12 +333,15 @@ class ExtensionReviewController implements vscode.HoverProvider {
   private setting<T>(name: string): T {
     return this.api.workspace.getConfiguration('smReviewer').get<T>(name) as T;
   }
+  private language() { return resolveLanguage(this.setting('language') as 'vi' | 'en' | 'auto', this.api.env.language); }
+  private localized(item: ReviewDiagnosticData): ReviewDiagnosticData { return localizeDiagnostic(item, this.language()); }
 }
 
 function toVsCodeDiagnostic(
   api: typeof vscode,
   uri: vscode.Uri,
   item: ReviewDiagnosticData,
+  source = DIAGNOSTIC_SOURCE,
 ): vscode.Diagnostic {
   const diagnostic = new api.Diagnostic(
     toVsCodeRange(api, item.range),
@@ -313,7 +353,7 @@ function toVsCodeDiagnostic(
         : api.DiagnosticSeverity.Information,
   );
   diagnostic.code = item.code;
-  diagnostic.source = DIAGNOSTIC_SOURCE;
+  diagnostic.source = source;
   diagnostic.relatedInformation = item.evidence.map((evidence) => new api.DiagnosticRelatedInformation(
     new api.Location(uri, toVsCodeRange(api, toEditorEvidenceRange(evidence))),
     evidence.message,

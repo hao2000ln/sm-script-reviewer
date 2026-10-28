@@ -43,7 +43,9 @@
       {
         "command": "smReviewer.clearAiApiKey",
         "title": "SM Reviewer: Clear AI API Key"
-      }
+      },
+      { "command": "smReviewer.reviewFolder", "title": "SM Reviewer: Review Folder" },
+      { "command": "smReviewer.clearFolderReviewResults", "title": "SM Reviewer: Clear Folder Review Results" }
     ],
     "configuration": {
       "title": "SM Reviewer",
@@ -53,6 +55,9 @@
           "default": true,
           "description": "Review supported ScriptLibrary documents when they are saved."
         },
+        "smReviewer.language": { "type": "string", "enum": ["vi", "en", "auto"], "default": "vi", "description": "Language used for VS Code review presentation." },
+        "smReviewer.folderReview.maxFiles": { "type": "number", "default": 1000, "minimum": 1, "description": "Maximum files reviewed by one folder review." },
+        "smReviewer.folderReview.exclude": { "type": "array", "default": [], "items": { "type": "string" }, "description": "Glob patterns excluded from folder review." },
         "smReviewer.enableDiagnostics": {
           "type": "boolean",
           "default": true,
@@ -81,6 +86,11 @@
         }
       }
     }
+  },
+  "menus": {
+    "explorer/context": [
+      { "command": "smReviewer.reviewFolder", "when": "explorerResourceIsFolder", "group": "navigation@10" }
+    ]
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
