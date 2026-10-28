@@ -63,6 +63,12 @@
           "default": true,
           "description": "Show SM Reviewer diagnostics in the editor."
         },
+        "smReviewer.rulePreset": {
+          "type": "string",
+          "enum": ["v1-production", "default"],
+          "default": "v1-production",
+          "description": "Static rule preset. v1-production prioritizes SM SCFile, return-code, and query-loop risks; default restores all built-in default rules."
+        },
         "smReviewer.ai.enabled": {
           "type": "boolean",
           "default": false,

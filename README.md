@@ -70,6 +70,24 @@ empty directory is a successful empty review.
 The JSON contract is documented in
 [`docs/reporting-schema-v1.md`](docs/reporting-schema-v1.md).
 
+## V1 internal pilot preset
+
+The `v1-production` preset is the recommended starting point for an internal
+offline rollout. It prioritizes evidence-backed SCFile contract checks,
+unhandled SCFile return codes, and SCFile query-loop progress. Comment, print,
+generic code-hygiene, and generic-loop rules are disabled so they do not hide
+higher-risk SM findings.
+
+```bash
+npm run review -- review ./SM-Exports/ScriptLibrary \
+  --preset v1-production --format html --output ./SM-UAT/v1-review.html
+```
+
+Use `--preset default` to restore every built-in default rule (the CLI default),
+or pass `--config <path>` to explicitly override a single preset rule. The
+VS Code extension defaults to `v1-production` through
+`smReviewer.rulePreset`.
+
 ## Offline UAT baseline
 
 For a local, approved ScriptLibrary export folder, create an offline static

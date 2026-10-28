@@ -8,6 +8,7 @@ import {
   toEditorSeverity,
 } from '../src/review-adapter';
 import { ReviewLifecycle, shouldReviewOnSave } from '../src/review-lifecycle';
+import { resolveReviewPreset } from '../../src/reviewer/presets';
 
 test('maps static severity to VS Code diagnostic severity', () => {
   assert.equal(toEditorSeverity('critical'), 'error');
@@ -145,6 +146,16 @@ function loop() {
   if (!reviewed.supported) return;
   assert.ok(reviewed.diagnostics.some(({ code }) => code === 'SM-LOOP-002'));
   assert.ok(reviewed.diagnostics.some(({ code }) => code === 'SM-DBG-001'));
+});
+
+test('supports the shared V1 production preset without a separate extension rule pipeline', () => {
+  const reviewed = reviewInMemoryDocument({
+    uri: 'file:///v1.js', fileName: 'v1.js', languageId: 'javascript',
+    text: 'function undocumented() { print("debug"); }', version: 1,
+  }, resolveReviewPreset('v1-production'));
+  assert.equal(reviewed.supported, true);
+  if (!reviewed.supported) return;
+  assert.equal(reviewed.diagnostics.length, 0);
 });
 
 test('reports parse diagnostics separately with a zero-length range', () => {

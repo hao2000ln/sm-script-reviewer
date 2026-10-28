@@ -80,6 +80,28 @@ test('configuration and minimum severity affect reporting without changing rule 
   }
 });
 
+test('v1-production preset suppresses quality-policy findings and accepts explicit overrides', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'sm-report-preset-'));
+  const sourcePath = join(root, 'source.js');
+  const configPath = join(root, 'review.config.json');
+  try {
+    await Promise.all([
+      writeFile(sourcePath, 'function undocumented() { print("debug"); }', 'utf8'),
+      writeFile(configPath, JSON.stringify({ rules: { 'SM-DBG-001': { enabled: true } } }), 'utf8'),
+    ]);
+    const focused = runReview(sourcePath, '--format', 'json', '--preset', 'v1-production');
+    assert.equal(focused.status, 0);
+    assert.equal((JSON.parse(focused.stdout) as ReviewReport).summary.findings, 0);
+
+    const override = runReview(sourcePath, '--format', 'json', '--preset', 'v1-production', '--config', configPath);
+    assert.equal(override.status, 1);
+    assert.deepEqual((JSON.parse(override.stdout) as ReviewReport).findings.map(({ ruleId }) => ruleId), ['SM-DBG-001']);
+    assert.equal(runReview(sourcePath, '--preset', 'unknown').status, 2);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('HTML report is standalone, escaped, filterable, and supports output files', async () => {
   const root = await mkdtemp(join(tmpdir(), 'sm-report-html-'));
   const sourcePath = join(root, 'a&b.js');

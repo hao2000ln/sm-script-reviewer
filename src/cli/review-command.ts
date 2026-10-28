@@ -5,6 +5,7 @@ import { OpenAICompatibleProvider } from '../ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../rules/builtin';
 import type { RuleSetConfig, RuleSeverity } from '../rules/types';
 import { reviewTarget } from '../reviewer/batch';
+import { isReviewPreset, resolveReviewPreset, type ReviewPreset } from '../reviewer/presets';
 import { renderHtmlReport } from '../reporting/html';
 import { renderJsonReport } from '../reporting/json';
 import { createReviewReport, reportExitCode } from '../reporting/report';
@@ -20,6 +21,7 @@ interface ReviewCommandOptions {
   readonly format: ReviewFormat;
   readonly output?: string;
   readonly config?: string;
+  readonly preset: ReviewPreset;
   readonly minSeverity: RuleSeverity;
   readonly ruleIds: readonly string[];
   readonly excludedPatterns: readonly string[];
@@ -43,6 +45,7 @@ Options:
   --format text|json|html           Report format (default: text)
   --output <path>                   Write the report to a file
   --config <path>                   Load JSON rule configuration
+  --preset default|v1-production    Shared rule preset (default: default)
   --min-severity info|warning|error Display and failure threshold (default: warning)
   --rule <rule-id>                  Include a rule in the report (repeatable)
   --exclude <glob>                  Exclude matching files (repeatable)
@@ -68,7 +71,8 @@ export async function runReviewCommand(target: string, args: readonly string[]):
     : {};
   const options = parseReviewOptions(args, environment);
   validateRuleFilters(options.ruleIds);
-  const config = options.config ? await loadConfig(options.config) : {};
+  const configuredRules = options.config ? await loadConfig(options.config) : {};
+  const config = resolveReviewPreset(options.preset, configuredRules);
   const batch = await reviewTarget(target, {
     config,
     excludedPatterns: options.excludedPatterns,
@@ -97,6 +101,7 @@ function parseReviewOptions(
   let format: ReviewFormat = 'text';
   let output: string | undefined;
   let config: string | undefined;
+  let preset: ReviewPreset = 'default';
   let minSeverity: RuleSeverity = 'warning';
   const ruleIds: string[] = [];
   const excludedPatterns: string[] = [];
@@ -131,6 +136,10 @@ function parseReviewOptions(
         break;
       case '--config':
         config = value;
+        break;
+      case '--preset':
+        if (!isReviewPreset(value)) throw new CliInputError(`Unknown review preset: ${value}`);
+        preset = value;
         break;
       case '--min-severity':
         if (!CLI_SEVERITIES.has(value as RuleSeverity)) {
@@ -174,6 +183,7 @@ function parseReviewOptions(
     format,
     output,
     config,
+    preset,
     minSeverity,
     ruleIds,
     excludedPatterns,

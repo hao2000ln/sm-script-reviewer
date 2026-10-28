@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import type { SourceDocument } from '../../src/core/types';
 import { discoverSourceFiles, loadSource } from '../../src/source/loader';
 import { review } from '../../src/reviewer/review';
-import type { RuleRunResult } from '../../src/rules/types';
+import type { RuleRunResult, RuleSetConfig } from '../../src/rules/types';
 
 export interface FolderReviewOptions {
   readonly maxFiles: number;
@@ -11,6 +11,7 @@ export interface FolderReviewOptions {
   readonly isCancellationRequested?: () => boolean;
   readonly openDocuments?: ReadonlyMap<string, string>;
   readonly onProgress?: (completed: number, total: number) => void;
+  readonly config?: RuleSetConfig;
 }
 export interface FolderReviewFile { readonly filePath: string; readonly result: RuleRunResult; readonly usedUnsavedContent: boolean; }
 export interface FolderReviewResult {
@@ -29,7 +30,7 @@ export async function reviewFolder(target: string, options: FolderReviewOptions)
       const source: SourceDocument = unsaved === undefined ? await loadSource(filePath) : {
         id: resolve(filePath), filePath: resolve(filePath), content: unsaved, hash: createHash('sha256').update(unsaved).digest('hex'),
       };
-      files.push({ filePath, result: review(source), usedUnsavedContent: unsaved !== undefined });
+      files.push({ filePath, result: review(source, options.config), usedUnsavedContent: unsaved !== undefined });
     } catch (error) { failures.push({ filePath, message: error instanceof Error ? error.message : String(error) }); }
     options.onProgress?.(index + 1, paths.length);
     await Promise.resolve();

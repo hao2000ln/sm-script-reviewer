@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { OpenAICompatibleProvider } from '../../src/ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../../src/rules/builtin';
 import type { FindingEvidence } from '../../src/rules/types';
+import { isReviewPreset, resolveReviewPreset } from '../../src/reviewer/presets';
 import { reviewAIInMemoryDocument, type AIReviewDiagnosticData } from './ai-review-adapter';
 import {
   isSupportedDocument,
@@ -83,7 +84,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
     const snapshots = new Map<string, string>();
     for (const document of this.api.workspace.textDocuments) if (document.isDirty && isSupportedDocument({ fileName: document.fileName, languageId: document.languageId })) snapshots.set(document.fileName.toLowerCase(), document.getText());
     await this.api.window.withProgress({ location: this.api.ProgressLocation.Notification, title: 'SM Reviewer: reviewing folder', cancellable: true }, async (progress, token) => {
-      const result = await reviewFolder(folder.fsPath, { maxFiles, excludedPatterns, openDocuments: snapshots, isCancellationRequested: () => token.isCancellationRequested, onProgress: (done, total) => progress.report({ increment: total ? 100 / total : 0, message: `${done}/${total}` }) });
+      const result = await reviewFolder(folder.fsPath, { maxFiles, excludedPatterns, config: this.reviewConfig(), openDocuments: snapshots, isCancellationRequested: () => token.isCancellationRequested, onProgress: (done, total) => progress.report({ increment: total ? 100 / total : 0, message: `${done}/${total}` }) });
       if (generation !== this.#folderGeneration || result.cancelled) return;
       this.folderCollection.clear();
       let findingCount = 0; let warnings = 0; let errors = 0;
@@ -229,7 +230,7 @@ class ExtensionReviewController implements vscode.HoverProvider {
     };
     const key = input.uri;
     const token = this.#lifecycle.begin(key, input.version);
-    const reviewed = await Promise.resolve().then(() => reviewInMemoryDocument(input));
+    const reviewed = await Promise.resolve().then(() => reviewInMemoryDocument(input, this.reviewConfig()));
     if (!this.#lifecycle.isCurrent(token, document.version)) return;
     if (!reviewed.supported) {
       this.clear(document.uri);
@@ -333,6 +334,12 @@ class ExtensionReviewController implements vscode.HoverProvider {
   private setting<T>(name: string): T {
     return this.api.workspace.getConfiguration('smReviewer').get<T>(name) as T;
   }
+
+  private reviewConfig() {
+    const configured = this.setting<string>('rulePreset');
+    return resolveReviewPreset(isReviewPreset(configured) ? configured : 'v1-production');
+  }
+
   private language() { return resolveLanguage(this.setting('language') as 'vi' | 'en' | 'auto', this.api.env.language); }
   private localized(item: ReviewDiagnosticData): ReviewDiagnosticData { return localizeDiagnostic(item, this.language()); }
 }

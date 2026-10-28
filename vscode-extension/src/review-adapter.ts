@@ -3,6 +3,7 @@ import { extname } from 'node:path';
 import type { SourceDocument, SourceLocation } from '../../src/core/types';
 import { review } from '../../src/reviewer/review';
 import type { Finding, RuleRunResult, RuleSeverity, SourceRange } from '../../src/rules/types';
+import type { RuleSetConfig } from '../../src/rules/types';
 
 export interface ReviewableDocument {
   readonly uri: string;
@@ -50,7 +51,10 @@ export function isSupportedDocument(document: Pick<ReviewableDocument, 'fileName
     || (!extension && document.languageId === 'javascript');
 }
 
-export function reviewInMemoryDocument(document: ReviewableDocument): InMemoryReviewResult {
+export function reviewInMemoryDocument(
+  document: ReviewableDocument,
+  config: RuleSetConfig = {},
+): InMemoryReviewResult {
   if (!isSupportedDocument(document)) {
     return {
       supported: false,
@@ -63,7 +67,7 @@ export function reviewInMemoryDocument(document: ReviewableDocument): InMemoryRe
     content: document.text,
     hash: createHash('sha256').update(document.text).digest('hex'),
   };
-  const result = review(source);
+  const result = review(source, config);
   return {
     supported: true,
     source,

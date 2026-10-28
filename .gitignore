@@ -5,6 +5,8 @@ ai-result.json
 static-result.json
 
 # Private Service Manager exports
+/SM-Exports/
+/SM-UAT/
 
 
 # Local environment
