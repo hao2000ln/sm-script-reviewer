@@ -19,11 +19,11 @@ const analyzeSm = (content: string) => {
 test('SCFile API catalog contains only approved evidence-backed methods', () => {
   assert.deepEqual(
     listScFileMethods().map(({ method }) => method),
-    ['doDelete', 'doInsert', 'doSelect', 'doUpdate', 'getLastRC', 'getNext'],
+    ['doDelete', 'doInsert', 'doSelect', 'doUpdate', 'getLastRC', 'getNext', 'setFields'],
   );
   for (const method of listScFileMethods()) {
     assert.equal(method.objectType, 'SCFile');
-    assert.equal(method.evidenceStatus, 'official');
+    assert.equal(method.status, 'VERIFIED');
     assert.ok(method.documentationUrl.startsWith('https://'));
     assert.ok(method.limitations.length > 0);
   }
@@ -42,7 +42,7 @@ if (RC_SUCCESS == rc) {
 
   assert.equal(result.constructions.length, 1);
   assert.equal(result.constructions[0].bindingName, 'file');
-  assert.equal(result.constructions[0].evidence.status, 'official');
+  assert.equal(result.constructions[0].evidence.status, 'VERIFIED');
   assert.ok(result.constructions[0].containingScopeId.length > 0);
   assert.deepEqual(result.calls.map(({ method, receiverName, resultUse }) => [
     method,
@@ -54,7 +54,7 @@ if (RC_SUCCESS == rc) {
   ]);
   assert.equal(result.comparisons.length, 1);
   assert.equal(result.comparisons[0].returnCodeName, 'rc');
-  assert.equal(result.comparisons[0].evidence.status, 'official');
+  assert.equal(result.comparisons[0].evidence.status, 'VERIFIED');
 });
 
 test('keeps lexical scopes separate and respects SCFile shadowing', () => {

@@ -1,8 +1,9 @@
 import ts from 'typescript';
 import type { RuleContext } from '../rules/types';
-import { getScFileMethod, SCFILE_OBJECT_EVIDENCE } from './api-catalog';
+import { getScFileMethod, SCFILE_CONSTRUCTOR, SCFILE_OBJECT_EVIDENCE } from './api-catalog';
 import type {
   SmAnalysis,
+  SmBindingEvent,
   SmCallEvent,
   SmConstructionEvent,
   SmLoopNode,
@@ -19,6 +20,7 @@ import {
 interface ExtractionState {
   readonly context: RuleContext;
   readonly constructions: SmConstructionEvent[];
+  readonly bindings: SmBindingEvent[];
   readonly calls: SmCallEvent[];
   readonly returnCodes: SmReturnCodeRecord[];
   readonly returnCodesById: Map<string, SmReturnCodeRecord>;
@@ -33,6 +35,7 @@ export function extractSmEvents(context: RuleContext): SmAnalysis {
   const state: ExtractionState = {
     context,
     constructions: [],
+    bindings: [],
     calls: [],
     returnCodes: [],
     returnCodesById: new Map(),
@@ -49,6 +52,7 @@ export function extractSmEvents(context: RuleContext): SmAnalysis {
 
   return {
     constructions: state.constructions,
+    bindings: state.bindings,
     calls: state.calls,
     returnCodes: state.returnCodes,
     comparisons: state.comparisons,
@@ -219,6 +223,7 @@ function processVariableDeclarationList(
     if (!declaration.initializer) continue;
     const value = evaluateExpression(declaration.initializer, symbols, state, 'assigned', name);
     symbols.assign(name, value);
+    recordBindingEvent(name, value, undefined, declaration, symbols, state);
   }
 }
 
@@ -281,6 +286,8 @@ function evaluateExpression(
     ) {
       const bindingId = `scfile:${node.getStart(state.context.sourceFile)}`;
       const bindingName = targetName ?? '<temporary>';
+      const mode = getScFileMode(node);
+      const tableName = getStaticString(node.arguments?.[0]);
       state.constructions.push({
         kind: 'scfile-construction',
         bindingId,
@@ -288,10 +295,16 @@ function evaluateExpression(
         ...(node.arguments?.[0]
           ? { tableText: node.arguments[0].getText(state.context.sourceFile) }
           : {}),
+        ...(tableName ? { tableName } : {}),
+        mode: mode.value,
+        modeCertainty: mode.certainty,
         range: state.context.rangeOf(node),
         containingFunctionId: state.currentFunctionId,
         containingScopeId: symbols.currentScopeId(),
-        evidence: SCFILE_OBJECT_EVIDENCE,
+        evidence: {
+          status: SCFILE_OBJECT_EVIDENCE.status,
+          documentationUrl: SCFILE_CONSTRUCTOR.documentationUrl,
+        },
       });
       return { kind: 'scfile', bindingId, aliasDepth: 0 };
     }
@@ -308,6 +321,7 @@ function evaluateExpression(
   if (ts.isBinaryExpression(node)) {
     if (isAssignment(node.operatorToken.kind)) {
       const name = ts.isIdentifier(node.left) ? node.left.text : undefined;
+      const previousValue = name ? symbols.resolve(name) : undefined;
       const value = evaluateExpression(
         node.right,
         symbols,
@@ -315,7 +329,10 @@ function evaluateExpression(
         name ? 'assigned' : 'unknown',
         name,
       );
-      if (name) symbols.assign(name, value);
+      if (name) {
+        symbols.assign(name, value);
+        recordBindingEvent(name, value, previousValue, node, symbols, state);
+      }
       else evaluateExpression(node.left as ts.Expression, symbols, state, 'unknown');
       return value;
     }
@@ -408,31 +425,81 @@ function createCallEvent(
     containingFunctionId: state.currentFunctionId,
     containingScopeId: symbols.currentScopeId(),
     evidence: {
-      status: methodSpec.evidenceStatus,
+      status: methodSpec.status,
       documentationUrl: methodSpec.documentationUrl,
     },
-    resultId,
-  };
-  const record: SmReturnCodeRecord = {
-    id: resultId,
-    call,
-    ...(targetName ? { targetName } : {}),
-    status: initialReturnCodeStatus(
-      usage,
-      targetName !== undefined
-        && state.deferredCapturedNames.get(state.currentFunctionId)?.has(targetName) === true,
-    ),
+    ...(methodSpec.returnsCode ? { resultId } : {}),
   };
   state.calls.push(call);
   state.callsByNode.set(node, call);
-  state.returnCodes.push(record);
-  state.returnCodesById.set(resultId, record);
+  if (methodSpec.returnsCode) {
+    const record: SmReturnCodeRecord = {
+      id: resultId,
+      call,
+      ...(targetName ? { targetName } : {}),
+      status: initialReturnCodeStatus(
+        usage,
+        targetName !== undefined
+          && state.deferredCapturedNames.get(state.currentFunctionId)?.has(targetName) === true,
+      ),
+    };
+    state.returnCodes.push(record);
+    state.returnCodesById.set(resultId, record);
+  }
   return {
     kind: 'return-code',
     resultId,
     bindingId: receiverValue.bindingId,
     method: methodSpec.method,
   };
+}
+
+function recordBindingEvent(
+  bindingName: string,
+  value: SmSymbolValue,
+  previousValue: SmSymbolValue | undefined,
+  node: ts.Node,
+  symbols: SmSymbolTracker,
+  state: ExtractionState,
+): void {
+  if (value.kind === 'scfile') {
+    state.bindings.push({
+      kind: 'scfile-binding',
+      bindingName,
+      bindingId: value.bindingId,
+      relation: value.aliasDepth === 0 ? 'construction' : 'alias',
+      range: state.context.rangeOf(node),
+      containingFunctionId: state.currentFunctionId,
+      containingScopeId: symbols.currentScopeId(),
+    });
+    return;
+  }
+  if (previousValue?.kind === 'scfile') {
+    state.bindings.push({
+      kind: 'scfile-reassignment',
+      bindingName,
+      bindingId: previousValue.bindingId,
+      relation: 'unknown-reassignment',
+      range: state.context.rangeOf(node),
+      containingFunctionId: state.currentFunctionId,
+      containingScopeId: symbols.currentScopeId(),
+    });
+  }
+}
+
+function getScFileMode(node: ts.NewExpression): {
+  value: 'READONLY' | 'READWRITE' | 'UNKNOWN';
+  certainty: 'verified' | 'unknown';
+} {
+  const modeArgument = node.arguments?.[1];
+  if (!modeArgument) return { value: 'READWRITE', certainty: 'verified' };
+  return ts.isIdentifier(modeArgument) && modeArgument.text === SCFILE_CONSTRUCTOR.readonlyModeArgument
+    ? { value: 'READONLY', certainty: 'verified' }
+    : { value: 'UNKNOWN', certainty: 'unknown' };
+}
+
+function getStaticString(expression: ts.Expression | undefined): string | undefined {
+  return expression && ts.isStringLiteral(expression) ? expression.text : undefined;
 }
 
 function evaluateUnknownCall(

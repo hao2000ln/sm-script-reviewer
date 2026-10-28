@@ -28,10 +28,10 @@ the requested `doRemove` must not be silently substituted for it.
 
 | IDs | Decision | Evidence / limits / priority |
 |---|---|---|
-| SM-SCF-001..005 | BLOCKED | Constructor mode and READONLY/write semantics are not in the approved catalog. Need versioned constructor/mode contract and project UAT. P1 after evidence. |
-| SM-SCF-006 | BLOCKED | `setFields` signature/reset semantics absent. Need official signature and examples, including `setFields()`. |
+| SM-SCF-001..005 | CONDITIONAL | Versioned constructor/READONLY and direct write-method contracts are now catalogued. A future rule may cover only direct/one-hop objects and verified `doInsert`/`doUpdate`/`doDelete`; target SM 9.8x UAT and severity approval remain required. |
+| SM-SCF-006 | CONDITIONAL | 9.80 `setFields(string|string-array|none)` and reset semantics are catalogued. Direct known-READWRITE use and literal invalid forms are candidates only after policy approval; dynamic fields and DBDICT validation remain blocked. |
 | SM-SCF-007..010 | BLOCKED | Require proven field-selection semantics, schema and performance policy; READONLY without `setFields` is never an error by itself. |
-| SM-SCF-011 | CONDITIONAL | READY only against an expanded versioned official method catalog and only for confirmed direct SCFile bindings. Custom wrappers/dynamic members excluded. |
+| SM-SCF-011 | CONDITIONAL | Still only against an expanded versioned official method catalog and confirmed direct SCFile bindings. Custom wrappers/dynamic members excluded; `doRemove` remains target-unverified. |
 | SM-SCF-012 | BLOCKED | Need verified per-method signatures/overloads. |
 
 ## Return code, loop, query, RAD and metadata proposals
@@ -70,3 +70,13 @@ New findings are additive to CLI/JSON/VS Code contracts; preserve fingerprints,
 stable ordering and rule configuration. Do not reinterpret existing severity or
 claim SM 9.8x compatibility until representative UAT. BLOCKED rules require
 official versioned API documentation or approved project metadata before code.
+
+## Foundation update (2026-10-28)
+
+`src/sm/api-catalog.ts` now records version, evidence source/status, argument
+counts/types, applicable mode, return-code semantics and limitations for the
+approved SCFile subset. `src/sm/scfile-state.ts` projects constructor identity,
+mode, literal table name, setFields selection, calls, aliases, reassignment and
+evidence IDs without publishing a new finding. See
+[`scfile-contract-foundation.md`](scfile-contract-foundation.md) for the exact
+contracts, 16-fixture corpus, and remaining target-version gaps.

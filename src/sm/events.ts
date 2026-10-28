@@ -1,6 +1,6 @@
 import type ts from 'typescript';
 import type { SourceRange } from '../rules/types';
-import type { SmApiMethodSpec } from './api-catalog';
+import type { SmApiMethodSpec, SmObjectMode } from './api-catalog';
 import type { SmSymbolSnapshot } from './symbols';
 
 export type SmResultUse =
@@ -14,19 +14,34 @@ export type SmResultUse =
 export type SmReturnCodeStatus = 'unhandled' | 'consumed' | 'ambiguous';
 
 export interface SmEvidenceProvenance {
-  readonly status: SmApiMethodSpec['evidenceStatus'];
+  readonly status: SmApiMethodSpec['status'];
   readonly documentationUrl: string;
 }
+
+export type SmModeCertainty = 'verified' | 'unknown';
 
 export interface SmConstructionEvent {
   readonly kind: 'scfile-construction';
   readonly bindingId: string;
   readonly bindingName: string;
+  readonly tableName?: string;
   readonly tableText?: string;
+  readonly mode: SmObjectMode;
+  readonly modeCertainty: SmModeCertainty;
   readonly range: SourceRange;
   readonly containingFunctionId: string;
   readonly containingScopeId: string;
   readonly evidence: SmEvidenceProvenance;
+}
+
+export interface SmBindingEvent {
+  readonly kind: 'scfile-binding' | 'scfile-reassignment';
+  readonly bindingName: string;
+  readonly bindingId: string;
+  readonly relation: 'construction' | 'alias' | 'unknown-reassignment';
+  readonly range: SourceRange;
+  readonly containingFunctionId: string;
+  readonly containingScopeId: string;
 }
 
 export interface SmArgumentEvent {
@@ -49,7 +64,7 @@ export interface SmCallEvent {
   readonly containingFunctionId: string;
   readonly containingScopeId: string;
   readonly evidence: SmEvidenceProvenance;
-  readonly resultId: string;
+  readonly resultId?: string;
 }
 
 export interface SmReturnCodeRecord {
@@ -73,6 +88,7 @@ export type SmLoopNode = ts.WhileStatement | ts.DoStatement | ts.ForStatement;
 
 export interface SmAnalysis {
   readonly constructions: readonly SmConstructionEvent[];
+  readonly bindings: readonly SmBindingEvent[];
   readonly calls: readonly SmCallEvent[];
   readonly returnCodes: readonly SmReturnCodeRecord[];
   readonly comparisons: readonly SmReturnCodeComparisonEvent[];

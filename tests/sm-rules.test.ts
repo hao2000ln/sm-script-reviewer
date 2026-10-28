@@ -26,6 +26,15 @@ var rc = second.doUpdate();
   assert.deepEqual(findings.map(({ range }) => range.start.line), [3, 5]);
 });
 
+test('SM-RC-001 preserves its approved method scope while setFields is foundation-only', () => {
+  const findings = findingsFor(`
+var file = new SCFile('contacts', SCFILE_READONLY);
+file.setFields('contact.name');
+`, 'SM-RC-001');
+
+  assert.equal(findings.length, 0);
+});
+
 test('SM-RC-001 accepts comparisons, direct conditions, returns, and passed results', () => {
   const findings = findingsFor(`
 var file = new SCFile('contacts');
