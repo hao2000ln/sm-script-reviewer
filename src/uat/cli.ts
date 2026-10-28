@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { loadUatEnvironmentConfiguration, type UatEnvironmentConfiguration } from '../cli/environment';
+import type { RuleSetConfig } from '../rules/types';
 import {
   compareUatBaselines,
   createManifestTemplate,
@@ -8,6 +9,7 @@ import {
   renderVietnameseSummary,
   type UatBaselineReport,
   LEGACY_UAT_BASELINE_SCHEMA_VERSION,
+  PREVIOUS_UAT_BASELINE_SCHEMA_VERSION,
   UAT_BASELINE_SCHEMA_VERSION,
   type UatCorpusProfile,
   type UatManifest,
@@ -17,6 +19,7 @@ const USAGE = `Usage: sm-uat <source-folder> [options]
 
 Options:
   --manifest <path>          Optional manually maintained classification manifest
+  --config <path>            RuleSetConfig JSON for UAT policy selection
   --output <path>            Write machine-readable baseline JSON (required for comparison)
   --previous <path>          Compare against a previous baseline JSON
   --write-manifest <path>    Explicitly write a NEEDS_VERIFICATION template
@@ -34,8 +37,10 @@ export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
   const invocation = resolveUatInvocation(suppliedTarget, options, environment);
   const { profile, target, uatDirectory, excludedPatterns } = invocation;
   const manifest = options.manifest ? await readJson<UatManifest>(options.manifest) : undefined;
+  const config = options.config ? await readJson<RuleSetConfig>(options.config) : undefined;
   const baseline = await createUatBaseline(target, {
     manifest,
+    config,
     excludedPatterns,
     profile,
     relativeCorpusRoot: relativeCorpusRoot(target),
@@ -60,6 +65,7 @@ export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
 interface ParsedOptions {
   readonly target?: string;
   readonly manifest?: string;
+  readonly config?: string;
   readonly output?: string;
   readonly previous?: string;
   readonly writeManifest?: string;
@@ -70,6 +76,7 @@ interface ParsedOptions {
 export function parseUatArguments(args: readonly string[]): ParsedOptions {
   let target: string | undefined;
   let manifest: string | undefined;
+  let config: string | undefined;
   let output: string | undefined;
   let previous: string | undefined;
   let writeManifest: string | undefined;
@@ -86,6 +93,7 @@ export function parseUatArguments(args: readonly string[]): ParsedOptions {
     if (!value || value.startsWith('-')) throw new Error(`Missing value for ${option}`);
     index += 1;
     if (option === '--manifest') manifest = value;
+    else if (option === '--config') config = value;
     else if (option === '--output') output = value;
     else if (option === '--previous') previous = value;
     else if (option === '--write-manifest') writeManifest = value;
@@ -97,7 +105,7 @@ export function parseUatArguments(args: readonly string[]): ParsedOptions {
     else throw new Error(`Unknown option: ${option}`);
   }
   if (previous && !output) throw new Error('--previous requires --output to preserve the comparison result');
-  return { target, manifest, output, previous, writeManifest, profile, excludedPatterns };
+  return { target, manifest, config, output, previous, writeManifest, profile, excludedPatterns };
 }
 
 export function resolveUatInvocation(
@@ -133,6 +141,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 async function readBaseline(path: string): Promise<UatBaselineReport> {
   const baseline = await readJson<UatBaselineReport>(path);
   if (baseline.schemaVersion !== UAT_BASELINE_SCHEMA_VERSION
+    && baseline.schemaVersion !== PREVIOUS_UAT_BASELINE_SCHEMA_VERSION
     && baseline.schemaVersion !== LEGACY_UAT_BASELINE_SCHEMA_VERSION) {
     throw new Error(`Unsupported UAT baseline schema: ${String(baseline.schemaVersion)}`);
   }

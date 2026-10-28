@@ -4,8 +4,9 @@ import { reviewTarget, type BatchReviewResult } from '../reviewer/batch';
 import type { Finding, RuleClassification, RuleSetConfig } from '../rules/types';
 
 export const UAT_MANIFEST_SCHEMA_VERSION = '1.0.0';
-export const UAT_BASELINE_SCHEMA_VERSION = '1.1.0';
+export const UAT_BASELINE_SCHEMA_VERSION = '1.2.0';
 export const LEGACY_UAT_BASELINE_SCHEMA_VERSION = '1.0.0';
+export const PREVIOUS_UAT_BASELINE_SCHEMA_VERSION = '1.1.0';
 
 export type UatCorpusProfile = 'production' | 'full' | 'custom';
 
@@ -115,6 +116,18 @@ export interface UatBaselineReport {
     readonly needsVerification: number;
     readonly unclassified: number;
   };
+  readonly groups: {
+    readonly ruleId: readonly UatFindingGroup[];
+    readonly file: readonly UatFindingGroup[];
+    readonly severity: readonly UatFindingGroup[];
+    readonly classification: readonly UatFindingGroup[];
+    readonly uatClassification: readonly UatFindingGroup[];
+  };
+}
+
+export interface UatFindingGroup {
+  readonly key: string;
+  readonly count: number;
 }
 
 export interface UatBaselineComparison {
@@ -205,6 +218,13 @@ export async function createUatBaseline(
       falsePositives: count('FALSE_POSITIVE'),
       needsVerification: count('NEEDS_VERIFICATION'),
       unclassified: classifiedFindings.filter(({ uatClassification }) => !uatClassification).length,
+    },
+    groups: {
+      ruleId: groupFindings(classifiedFindings, ({ ruleId }) => ruleId),
+      file: groupFindings(classifiedFindings, ({ relativeFilePath }) => relativeFilePath),
+      severity: groupFindings(classifiedFindings, ({ severity }) => severity),
+      classification: groupFindings(classifiedFindings, ({ classification }) => classification),
+      uatClassification: groupFindings(classifiedFindings, ({ uatClassification }) => uatClassification ?? 'UNCLASSIFIED'),
     },
   };
 }
@@ -386,4 +406,18 @@ function compareFinding(left: UatFinding, right: UatFinding): number {
     || left.range.start.offset - right.range.start.offset
     || left.ruleId.localeCompare(right.ruleId)
     || left.fingerprint.localeCompare(right.fingerprint);
+}
+
+function groupFindings(
+  findings: readonly UatFinding[],
+  keyOf: (finding: UatFinding) => string,
+): readonly UatFindingGroup[] {
+  const counts = new Map<string, number>();
+  for (const finding of findings) {
+    const key = keyOf(finding);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((left, right) => left.key.localeCompare(right.key));
 }

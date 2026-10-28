@@ -23,7 +23,7 @@ export class RuleConfigurationError extends Error {
 
 interface ResolvedRuleConfig {
   enabled: boolean;
-  severity: RuleSeverity;
+  severity?: RuleSeverity;
   options: Readonly<Record<string, unknown>>;
 }
 
@@ -114,7 +114,7 @@ function validateAndResolveConfig(
 
     resolved.set(rule.metadata.id, {
       enabled: value === false ? false : ruleConfig?.enabled ?? rule.metadata.defaultEnabled,
-      severity: ruleConfig?.severity ?? rule.metadata.defaultSeverity,
+      severity: ruleConfig?.severity,
       options,
     });
   }
@@ -124,10 +124,20 @@ function validateAndResolveConfig(
 function normalizeFinding(
   rule: Rule,
   candidate: FindingCandidate,
-  severity: RuleSeverity,
+  configuredSeverity: RuleSeverity | undefined,
   context: ReturnType<typeof createRuleContext>,
 ): Finding {
-  const confidence = rule.metadata.classification === 'deterministic'
+  const {
+    classification: candidateClassification,
+    defaultSeverity,
+    ...findingCandidate
+  } = candidate;
+  const classification = candidateClassification ?? rule.metadata.classification;
+  if (classification !== rule.metadata.classification
+    && !rule.metadata.allowedClassifications?.includes(classification)) {
+    throw new Error(`Rule ${rule.metadata.id} returned an unsupported classification`);
+  }
+  const confidence = classification === 'deterministic'
     ? 1
     : candidate.confidence;
   if (confidence === undefined || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
@@ -148,13 +158,13 @@ function normalizeFinding(
   ].join('\0')).digest('hex');
 
   return {
-    ...candidate,
+    ...findingCandidate,
     evidence,
     fingerprint,
     ruleId: rule.metadata.id,
     sourceId: context.source.id,
-    severity,
-    classification: rule.metadata.classification,
+    severity: configuredSeverity ?? defaultSeverity ?? rule.metadata.defaultSeverity,
+    classification,
     confidence,
     analysisStatus: context.syntaxValid ? 'valid' : 'recovered',
   };

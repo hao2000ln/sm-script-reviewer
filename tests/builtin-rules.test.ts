@@ -5,14 +5,14 @@ import { createAnalysisArtifact } from '../src/parser/analysis-artifact';
 import { createBuiltinRuleRegistry } from '../src/rules/builtin';
 import { RuleRunner } from '../src/rules/runner';
 
-const review = (content: string) => {
+const review = (content: string, config: Parameters<RuleRunner['run']>[1] = {}) => {
   const source: SourceDocument = {
     id: 'test',
     filePath: 'test.js',
     content,
     hash: 'test-hash',
   };
-  return new RuleRunner(createBuiltinRuleRegistry()).run(createAnalysisArtifact(source));
+  return new RuleRunner(createBuiltinRuleRegistry()).run(createAnalysisArtifact(source), config);
 };
 
 test('SM-CMT-001 reports named functions without a leading comment', () => {
@@ -55,6 +55,29 @@ function outer() {
   ]);
 });
 
+test('SM-CMT-001 public-functions reports only undocumented source-root declarations', () => {
+  const result = review(`
+function publicMissing() {}
+function outer() { function nestedMissing() {} }
+var expressionMissing = function namedExpression() {};
+var arrowMissing = () => {};
+(function callbackMissing() {})();
+`, { rules: { 'SM-CMT-001': { options: { mode: 'public-functions' } } } });
+  assert.deepEqual(result.findings.filter(({ ruleId }) => ruleId === 'SM-CMT-001').map(({ message }) => message), [
+    'Function "publicMissing" has no leading comment.',
+    'Function "outer" has no leading comment.',
+  ]);
+});
+
+test('SM-CMT-001 off emits no findings and rejects invalid modes', () => {
+  assert.equal(review('function missing() {}', {
+    rules: { 'SM-CMT-001': { options: { mode: 'off' } } },
+  }).findings.filter(({ ruleId }) => ruleId === 'SM-CMT-001').length, 0);
+  assert.throws(() => review('function missing() {}', {
+    rules: { 'SM-CMT-001': { options: { mode: 'everywhere' } } },
+  }), /SM-CMT-001 mode must be one of/u);
+});
+
 test('SM-DBG-001 reports only direct print calls', () => {
   const result = review(`
 print("debug");
@@ -72,6 +95,34 @@ print.call(null, "not a direct call");
   assert.equal(findings[0].severity, 'warning');
   assert.equal(findings[0].classification, 'deterministic');
   assert.equal(findings[0].confidence, 1);
+});
+
+test('SM-DBG-001 debug-patterns reports only statically known explicit markers as heuristic info', () => {
+  const result = review(`
+print("DEBUG: start");
+print(` + '`TRACE request`' + `);
+print("TEMP DEBUG cleanup");
+print("debugging output");
+print("notrace");
+print(dynamicMessage);
+`, { rules: { 'SM-DBG-001': { options: { mode: 'debug-patterns' } } } });
+  const findings = result.findings.filter(({ ruleId }) => ruleId === 'SM-DBG-001');
+  assert.equal(findings.length, 3);
+  assert.ok(findings.every(({ severity, classification, confidence }) => (
+    severity === 'info' && classification === 'heuristic' && confidence === 0.9
+  )));
+});
+
+test('SM-DBG-001 off emits no findings, honors severity override, and rejects invalid modes', () => {
+  assert.equal(review('print("DEBUG");', {
+    rules: { 'SM-DBG-001': { options: { mode: 'off' } } },
+  }).findings.filter(({ ruleId }) => ruleId === 'SM-DBG-001').length, 0);
+  assert.equal(review('print("DEBUG");', {
+    rules: { 'SM-DBG-001': { severity: 'warning', options: { mode: 'debug-patterns' } } },
+  }).findings.find(({ ruleId }) => ruleId === 'SM-DBG-001')?.severity, 'warning');
+  assert.throws(() => review('print("x");', {
+    rules: { 'SM-DBG-001': { options: { mode: 'only-debug' } } },
+  }), /SM-DBG-001 mode must be one of/u);
 });
 
 test('built-in rules do not run on syntax-invalid source', () => {

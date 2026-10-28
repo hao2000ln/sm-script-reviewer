@@ -24,6 +24,10 @@ export interface FindingCandidate {
   suggestion?: string;
   /** Required for heuristic rules; deterministic findings are always 1. */
   confidence?: number;
+  /** Opt-in mode-specific classification; must be allowed by rule metadata. */
+  classification?: RuleClassification;
+  /** Used only when the user did not explicitly override rule severity. */
+  defaultSeverity?: RuleSeverity;
 }
 
 export interface Finding extends FindingCandidate {
@@ -41,6 +45,8 @@ export interface RuleMetadata {
   title: string;
   description: string;
   classification: RuleClassification;
+  /** Explicitly permits a rule mode to emit a different classification. */
+  allowedClassifications?: readonly RuleClassification[];
   defaultEnabled: boolean;
   defaultSeverity: RuleSeverity;
   syntaxPolicy: SyntaxPolicy;

@@ -91,10 +91,43 @@ Coverage is deliberately split:
 
 The aggregate `coverage.status` is therefore `incomplete`: a static baseline
 and manual labels cannot establish complete SM runtime semantic coverage.
-Reports use baseline schema `1.1.0`; comparison accepts legacy `1.0.0`
-snapshots because finding identities remain unchanged. Fingerprints contain the source hash, so a source edit can turn a prior finding
+Reports use baseline schema `1.2.0`; comparison accepts legacy `1.0.0` and
+`1.1.0` snapshots because finding identities remain unchanged. Fingerprints contain the source hash, so a source edit can turn a prior finding
 into a new/unmatched entry even when it appears conceptually similar. Labels are
 never migrated heuristically.
+
+## Configurable review-noise policies
+
+The default rule behavior remains compatible with earlier baselines:
+
+- `SM-CMT-001` uses `all-functions` and reports every named indexed function
+  without an adjacent leading comment.
+- `SM-DBG-001` uses `all-print` and reports every direct `print()` call as a
+  warning.
+
+For UAT triage, supply a normal RuleSet JSON file with
+`--config ./SM-UAT/uat-policy.json`. `SM-CMT-001` supports `all-functions`,
+`public-functions` (only source-root `FunctionDeclaration` nodes), and `off`.
+`SM-DBG-001` supports `all-print`, `debug-patterns`, and `off`.
+`debug-patterns` only recognizes static string literals or no-substitution
+templates containing the whole-word markers `DEBUG`, `TRACE`, or `TEMP DEBUG`.
+It emits heuristic `info` findings; dynamic arguments and arbitrary `print()`
+calls are not treated as proven debug output.
+
+Baseline JSON `groups` provides stable count tables by rule ID, file, severity,
+deterministic/heuristic classification, and UAT classification. Schema `1.2.0`
+adds these tables; comparison continues to accept `1.0.0` and `1.1.0` snapshots.
+
+Example `./SM-UAT/uat-policy.json`:
+
+```json
+{
+  "rules": {
+    "SM-CMT-001": { "options": { "mode": "public-functions" } },
+    "SM-DBG-001": { "options": { "mode": "debug-patterns" } }
+  }
+}
+```
 
 Synthetic fixtures in automated tests are only regression data. They are not
 evidence of production accuracy or SM 9.8x runtime compatibility.

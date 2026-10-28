@@ -8,9 +8,9 @@ import { parseUatArguments, resolveUatInvocation, runUatCommand } from '../src/u
 
 test('UAT CLI accepts options before the source folder and preserves repeatable excludes', () => {
   assert.deepEqual(parseUatArguments([
-    '--exclude', 'generated/**', '--manifest', 'labels.json', 'exports', '--exclude', 'temp/**',
+    '--exclude', 'generated/**', '--manifest', 'labels.json', '--config', 'policy.json', 'exports', '--exclude', 'temp/**',
   ]), {
-    target: 'exports', manifest: 'labels.json', output: undefined, previous: undefined,
+    target: 'exports', manifest: 'labels.json', config: 'policy.json', output: undefined, previous: undefined,
     writeManifest: undefined, profile: undefined, excludedPatterns: ['generated/**', 'temp/**'],
   });
 });
@@ -51,11 +51,14 @@ test('UAT environment values are optional and a missing output directory is crea
     });
     const source = join(root, 'source.js');
     const output = join(root, 'new-output', 'baseline.json');
+    const config = join(root, 'uat-policy.json');
     await writeFile(source, 'print("debug");', 'utf8');
-    assert.equal(await runUatCommand([source, '--profile', 'full', '--output', output]), 0);
+    await writeFile(config, JSON.stringify({ rules: { 'SM-DBG-001': { options: { mode: 'off' } } } }), 'utf8');
+    assert.equal(await runUatCommand([source, '--profile', 'full', '--config', config, '--output', output]), 0);
     const serialized = await readFile(output, 'utf8');
-    const report = JSON.parse(serialized) as { provenance: { profile: string } };
+    const report = JSON.parse(serialized) as { provenance: { profile: string }; findings: readonly { ruleId: string }[] };
     assert.equal(report.provenance.profile, 'full');
+    assert.equal(report.findings.some(({ ruleId }) => ruleId === 'SM-DBG-001'), false);
     assert.equal(serialized.includes(root), false);
 
     const previous = join(root, 'legacy-baseline.json');
