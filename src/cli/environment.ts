@@ -9,6 +9,11 @@ export interface AIEnvironmentConfiguration {
   readonly timeoutMs?: string;
 }
 
+export interface UatEnvironmentConfiguration {
+  readonly scriptLibraryDir?: string;
+  readonly uatDir?: string;
+}
+
 const SUPPORTED_VARIABLES = {
   apiKey: 'SM_REVIEWER_AI_API_KEY',
   model: 'SM_REVIEWER_AI_MODEL',
@@ -32,6 +37,30 @@ export async function loadAIEnvironmentConfiguration(
       return value === undefined ? [] : [[property, value]];
     }),
   ) as AIEnvironmentConfiguration;
+}
+
+export async function loadUatEnvironmentConfiguration(
+  workingDirectory = process.cwd(),
+): Promise<UatEnvironmentConfiguration> {
+  const values = await loadEnvironmentFile(workingDirectory);
+  return {
+    ...(process.env.SM_SCRIPTLIBRARY_DIR ?? values.SM_SCRIPTLIBRARY_DIR
+      ? { scriptLibraryDir: process.env.SM_SCRIPTLIBRARY_DIR ?? values.SM_SCRIPTLIBRARY_DIR }
+      : {}),
+    ...(process.env.SM_UAT_DIR ?? values.SM_UAT_DIR
+      ? { uatDir: process.env.SM_UAT_DIR ?? values.SM_UAT_DIR }
+      : {}),
+  };
+}
+
+async function loadEnvironmentFile(workingDirectory: string): Promise<Record<string, string | undefined>> {
+  let fileValues: Record<string, string | undefined> = {};
+  try {
+    fileValues = parseEnv(await readFile(resolve(workingDirectory, '.env'), 'utf8'));
+  } catch (error) {
+    if (!isMissingFile(error)) throw new Error('Cannot load .env configuration');
+  }
+  return fileValues;
 }
 
 function isMissingFile(error: unknown): boolean {

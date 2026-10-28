@@ -10,12 +10,17 @@ approved local folder and retain their provenance outside Git.
 ## Git Bash commands on Windows
 
 From the repository root, make a first snapshot and an explicit review-label
-template. `corpusComplete` is deliberately `false` in the generated template:
+template. With no source argument, the command uses
+`./SM-Exports/ScriptLibrary`; `--profile production` excludes only the
+project-specific `Samples`, `Tests`, and `Tools` groups. New/unknown top-level
+groups are included and recorded in `provenance.includedUnknownDirectories`.
+Use `--profile full` to include every supported file. `corpusComplete` is
+deliberately `false` in the generated template:
 change it only when the project owner has confirmed the export is complete.
 
 ```bash
-npm.cmd run uat:baseline -- /d/SM-Exports/ScriptLibrary \
-  --output /d/SM-UAT/baseline-001.json \
+npm.cmd run uat:baseline -- --profile production \
+  --output ./SM-UAT/baseline-production-001.json \
   --write-manifest /d/SM-UAT/labels.json
 ```
 
@@ -36,6 +41,21 @@ npm.cmd run uat:baseline -- /d/SM-Exports/ScriptLibrary \
   --manifest /d/SM-UAT/labels.json \
   --output /d/SM-UAT/baseline-002.json
 ```
+
+For a full snapshot, including `Samples`, `Tests`, and `Tools`:
+
+```bash
+npm.cmd run uat:baseline -- --profile full \
+  --output ./SM-UAT/baseline-full-001.json
+```
+
+`SM_SCRIPTLIBRARY_DIR` and `SM_UAT_DIR` may be set in the project `.env` for
+local convenience. A positional source folder or `--output` path always wins
+over those defaults. The command creates the output directory when necessary.
+Use explicit, versioned output filenames for later comparisons; if `--output`
+is omitted in the all-default workflow, the local default is
+`SM-UAT/baseline-<profile>.json`. An explicitly supplied source without
+`--output` retains the earlier console-only behavior.
 
 Compare a later run. Changed fingerprints are listed as new/removed and prior
 labels that no longer match are retained as `unmatchedPriorClassifications`;
@@ -65,7 +85,8 @@ Coverage is deliberately split:
 
 The aggregate `coverage.status` is therefore `incomplete`: a static baseline
 and manual labels cannot establish complete SM runtime semantic coverage.
-Fingerprints contain the source hash, so a source edit can turn a prior finding
+Reports use baseline schema `1.1.0`; comparison accepts legacy `1.0.0`
+snapshots because finding identities remain unchanged. Fingerprints contain the source hash, so a source edit can turn a prior finding
 into a new/unmatched entry even when it appears conceptually similar. Labels are
 never migrated heuristically.
 

@@ -47,6 +47,31 @@ test('UAT baseline orders nested files and accounts for unsupported and invalid 
   });
 });
 
+test('production profile exclusions keep project-specific unknown directories visible while full includes all groups', async () => {
+  await withCorpus(async (root) => {
+    await source(root, 'ESD_CONFIG/config.js', 'print("config");');
+    await source(root, 'ESD_CORE/core.js', 'print("core");');
+    await mkdir(join(root, 'ESD_FORM'));
+    await source(root, 'ESD_SHARED/shared.txt', 'print("shared");');
+    await source(root, 'Samples/sample.js', 'print("sample");');
+    await source(root, 'Tests/test.js', 'print("test");');
+    await source(root, 'Tools/tool.js', 'print("tool");');
+    await source(root, 'CUSTOM_EXTENSION/extra.js', 'print("extra");');
+    const production = await createUatBaseline(root, {
+      profile: 'production',
+      excludedPatterns: ['Samples/**', 'Tests/**', 'Tools/**'],
+    });
+    assert.deepEqual(production.files.map(({ relativeFilePath }) => relativeFilePath), [
+      'CUSTOM_EXTENSION/extra.js', 'ESD_CONFIG/config.js', 'ESD_CORE/core.js', 'ESD_SHARED/shared.txt',
+    ]);
+    assert.deepEqual(production.provenance.includedUnknownDirectories, ['CUSTOM_EXTENSION']);
+    assert.deepEqual(production.provenance.appliedExclusions, ['Samples/**', 'Tests/**', 'Tools/**']);
+    const full = await createUatBaseline(root, { profile: 'full' });
+    assert.equal(full.files.length, 7);
+    assert.deepEqual(full.provenance.includedUnknownDirectories, []);
+  });
+});
+
 test('UAT baseline persists manual classifications by fingerprint and keeps deterministic identities distinct', async () => {
   await withCorpus(async (root) => {
     await source(root, 'one.js', 'function one() { print("x"); }');
@@ -159,5 +184,8 @@ test('UAT baseline includes approved SCFile findings without claiming runtime ac
     assert.equal(report.coverage.execution.status, 'complete');
     assert.equal(report.coverage.semantic.status, 'not-established');
     assert.equal(report.coverage.status, 'incomplete');
+    assert.equal(report.schemaVersion, '1.1.0');
+    assert.equal(report.targetPath.includes(root), false);
+    assert.equal(report.provenance.sourceHash.length, 64);
   });
 });

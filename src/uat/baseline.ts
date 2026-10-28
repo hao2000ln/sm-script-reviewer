@@ -3,7 +3,11 @@ import { relative, resolve } from 'node:path';
 import { reviewTarget, type BatchReviewResult } from '../reviewer/batch';
 import type { Finding, RuleClassification, RuleSetConfig } from '../rules/types';
 
-export const UAT_BASELINE_SCHEMA_VERSION = '1.0.0';
+export const UAT_MANIFEST_SCHEMA_VERSION = '1.0.0';
+export const UAT_BASELINE_SCHEMA_VERSION = '1.1.0';
+export const LEGACY_UAT_BASELINE_SCHEMA_VERSION = '1.0.0';
+
+export type UatCorpusProfile = 'production' | 'full' | 'custom';
 
 export type UatFindingClassification = 'TRUE_POSITIVE' | 'FALSE_POSITIVE' | 'NEEDS_VERIFICATION';
 
@@ -16,7 +20,7 @@ export interface UatClassificationEntry {
 }
 
 export interface UatManifest {
-  readonly schemaVersion: typeof UAT_BASELINE_SCHEMA_VERSION;
+  readonly schemaVersion: typeof UAT_MANIFEST_SCHEMA_VERSION;
   /** Declaring a corpus complete is an owner assertion, never inferred. */
   readonly corpusComplete?: boolean;
   readonly classifications: readonly UatClassificationEntry[];
@@ -27,6 +31,9 @@ export interface UatBaselineOptions {
   readonly config?: RuleSetConfig;
   readonly excludedPatterns?: readonly string[];
   readonly generatedAt?: string;
+  readonly profile?: UatCorpusProfile;
+  /** Non-sensitive corpus root label supplied by the CLI/host. */
+  readonly relativeCorpusRoot?: string;
   /** Internal host seam for deterministic UAT regression tests. */
   readonly reviewTarget?: typeof reviewTarget;
 }
@@ -68,7 +75,22 @@ export interface UatCoverage {
 export interface UatBaselineReport {
   readonly schemaVersion: typeof UAT_BASELINE_SCHEMA_VERSION;
   readonly generatedAt: string;
+  /** A shareable relative path; never an absolute local filesystem path. */
   readonly targetPath: string;
+  readonly provenance: {
+    readonly profile: UatCorpusProfile;
+    readonly relativeCorpusRoot: string;
+    readonly appliedExclusions: readonly string[];
+    readonly reviewedFileCount: number;
+    readonly skippedFileCount: number;
+    /** Deterministic aggregate of relative path and per-file source hashes. */
+    readonly sourceHash: string;
+    readonly ruleConfigurationHash: string;
+    /** Populated by npm when available; absent for direct Node invocation. */
+    readonly toolVersion?: string;
+    /** New project-specific groups included by production profile remain visible. */
+    readonly includedUnknownDirectories: readonly string[];
+  };
   readonly files: readonly {
     relativeFilePath: string;
     sourceHash: string;
@@ -145,11 +167,24 @@ export async function createUatBaseline(
     .filter(({ identity }) => !matchedIdentities.has(identity))
     .sort((left, right) => left.identity.localeCompare(right.identity));
   const coverage = calculateCoverage(batch, manifest, targetPath);
+  const relativeCorpusRoot = options.relativeCorpusRoot ?? shareablePath(targetPath);
+  const appliedExclusions = [...(options.excludedPatterns ?? [])].sort();
   const count = (value: UatFindingClassification) => classifiedFindings.filter((finding) => finding.uatClassification === value).length;
   return {
     schemaVersion: UAT_BASELINE_SCHEMA_VERSION,
     generatedAt: options.generatedAt ?? new Date().toISOString(),
-    targetPath,
+    targetPath: relativeCorpusRoot,
+    provenance: {
+      profile: options.profile ?? 'custom',
+      relativeCorpusRoot,
+      appliedExclusions,
+      reviewedFileCount: files.length,
+      skippedFileCount: batch.skippedFileCount,
+      sourceHash: aggregateSourceHash(files),
+      ruleConfigurationHash: hashValue(options.config ?? {}),
+      ...(process.env.npm_package_version ? { toolVersion: process.env.npm_package_version } : {}),
+      includedUnknownDirectories: unknownDirectories(files, options.profile ?? 'custom'),
+    },
     files,
     findings: classifiedFindings,
     unclassifiedFindings: classifiedFindings.filter(({ uatClassification }) => !uatClassification).map(({ identity }) => identity),
@@ -198,7 +233,7 @@ export function compareUatBaselines(
 
 export function createManifestTemplate(report: UatBaselineReport): UatManifest {
   return {
-    schemaVersion: UAT_BASELINE_SCHEMA_VERSION,
+    schemaVersion: UAT_MANIFEST_SCHEMA_VERSION,
     corpusComplete: false,
     classifications: report.findings.map(({ identity, fingerprint }) => ({
       identity,
@@ -221,11 +256,11 @@ export function renderVietnameseSummary(report: UatBaselineReport): string {
 }
 
 function emptyManifest(): UatManifest {
-  return { schemaVersion: UAT_BASELINE_SCHEMA_VERSION, classifications: [] };
+  return { schemaVersion: UAT_MANIFEST_SCHEMA_VERSION, classifications: [] };
 }
 
 function validateManifest(manifest: UatManifest): void {
-  if (!isPlainObject(manifest) || manifest.schemaVersion !== UAT_BASELINE_SCHEMA_VERSION) {
+  if (!isPlainObject(manifest) || manifest.schemaVersion !== UAT_MANIFEST_SCHEMA_VERSION) {
     throw new Error(`Unsupported UAT manifest schema: ${String((manifest as { schemaVersion?: unknown })?.schemaVersion)}`);
   }
   if (manifest.corpusComplete !== undefined && typeof manifest.corpusComplete !== 'boolean') throw new Error('UAT manifest corpusComplete must be boolean');
@@ -307,6 +342,33 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function relativePath(targetPath: string, filePath: string): string {
   const value = relative(targetPath, filePath).replaceAll('\\', '/');
   return value || filePath.replaceAll('\\', '/');
+}
+
+function shareablePath(path: string): string {
+  const value = relative(process.cwd(), path).replaceAll('\\', '/');
+  return value || '.';
+}
+
+function aggregateSourceHash(files: readonly UatBaselineReport['files'][number][]): string {
+  return createHash('sha256')
+    .update(files.map((file) => `${file.relativeFilePath}\0${file.sourceHash}`).join('\n'))
+    .digest('hex');
+}
+
+function hashValue(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function unknownDirectories(
+  files: readonly UatBaselineReport['files'][number][],
+  profile: UatCorpusProfile,
+): readonly string[] {
+  if (profile !== 'production') return [];
+  const known = new Set(['ESD_CONFIG', 'ESD_CORE', 'ESD_FORM', 'ESD_SHARED']);
+  return [...new Set(files
+    .map(({ relativeFilePath }) => relativeFilePath.split('/')[0])
+    .filter((directory) => directory && !known.has(directory)))]
+    .sort();
 }
 
 function findingIdentity(relativeFilePath: string, finding: Finding): string {

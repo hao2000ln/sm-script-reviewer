@@ -1,7 +1,14 @@
 dist/
 node_modules/
+
+ai-result.json
+static-result.json
+
+# Private Service Manager exports
+/SM-Exports/
+/SM-UAT/
+
+# Local environment
 .env
 .env.*
 !.env.example
-ai-result.json
-static-result.json

@@ -1,11 +1,15 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { loadUatEnvironmentConfiguration, type UatEnvironmentConfiguration } from '../cli/environment';
 import {
   compareUatBaselines,
   createManifestTemplate,
   createUatBaseline,
   renderVietnameseSummary,
   type UatBaselineReport,
+  LEGACY_UAT_BASELINE_SCHEMA_VERSION,
+  UAT_BASELINE_SCHEMA_VERSION,
+  type UatCorpusProfile,
   type UatManifest,
 } from './baseline';
 
@@ -16,6 +20,7 @@ Options:
   --output <path>            Write machine-readable baseline JSON (required for comparison)
   --previous <path>          Compare against a previous baseline JSON
   --write-manifest <path>    Explicitly write a NEEDS_VERIFICATION template
+  --profile <production|full> Corpus profile (default: production)
   --exclude <glob>           Exclude source paths (repeatable)
   --help                     Show this help`;
 
@@ -24,20 +29,25 @@ export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
     process.stdout.write(`${USAGE}\n`);
     return 0;
   }
-  const { target, ...options } = parseUatArguments(args);
-  if (!target) {
-    process.stdout.write(`${USAGE}\n`);
-    return 2;
-  }
+  const { target: suppliedTarget, ...options } = parseUatArguments(args);
+  const environment = await loadUatEnvironmentConfiguration();
+  const invocation = resolveUatInvocation(suppliedTarget, options, environment);
+  const { profile, target, uatDirectory, excludedPatterns } = invocation;
   const manifest = options.manifest ? await readJson<UatManifest>(options.manifest) : undefined;
   const baseline = await createUatBaseline(target, {
     manifest,
-    excludedPatterns: options.excludedPatterns,
+    excludedPatterns,
+    profile,
+    relativeCorpusRoot: relativeCorpusRoot(target),
   });
   const report = options.previous
-    ? { ...baseline, comparison: compareUatBaselines(await readJson<UatBaselineReport>(options.previous), baseline) }
+    ? { ...baseline, comparison: compareUatBaselines(await readBaseline(options.previous), baseline) }
     : baseline;
-  if (options.output) await writeJson(options.output, report);
+  // Preserve the original explicit-source behavior: without --output it only
+  // writes the console summary. The all-default local workflow gets a safe
+  // predictable destination under SM-UAT.
+  const output = options.output ?? (suppliedTarget ? undefined : resolve(uatDirectory, `baseline-${profile}.json`));
+  if (output) await writeJson(output, report);
   if (options.writeManifest) await writeJson(options.writeManifest, createManifestTemplate(baseline));
   process.stdout.write(`${renderVietnameseSummary(baseline)}\n`);
   if (options.previous) {
@@ -53,6 +63,7 @@ interface ParsedOptions {
   readonly output?: string;
   readonly previous?: string;
   readonly writeManifest?: string;
+  readonly profile?: Exclude<UatCorpusProfile, 'custom'>;
   readonly excludedPatterns: readonly string[];
 }
 
@@ -62,6 +73,7 @@ export function parseUatArguments(args: readonly string[]): ParsedOptions {
   let output: string | undefined;
   let previous: string | undefined;
   let writeManifest: string | undefined;
+  let profile: Exclude<UatCorpusProfile, 'custom'> | undefined;
   const excludedPatterns: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const option = args[index];
@@ -77,11 +89,35 @@ export function parseUatArguments(args: readonly string[]): ParsedOptions {
     else if (option === '--output') output = value;
     else if (option === '--previous') previous = value;
     else if (option === '--write-manifest') writeManifest = value;
+    else if (option === '--profile') {
+      if (value !== 'production' && value !== 'full') throw new Error(`Invalid UAT profile: ${value}`);
+      profile = value;
+    }
     else if (option === '--exclude') excludedPatterns.push(value);
     else throw new Error(`Unknown option: ${option}`);
   }
   if (previous && !output) throw new Error('--previous requires --output to preserve the comparison result');
-  return { target, manifest, output, previous, writeManifest, excludedPatterns };
+  return { target, manifest, output, previous, writeManifest, profile, excludedPatterns };
+}
+
+export function resolveUatInvocation(
+  suppliedTarget: string | undefined,
+  options: Omit<ParsedOptions, 'target'>,
+  environment: UatEnvironmentConfiguration,
+): {
+  readonly profile: Exclude<UatCorpusProfile, 'custom'>;
+  readonly target: string;
+  readonly uatDirectory: string;
+  readonly excludedPatterns: readonly string[];
+} {
+  const profile = options.profile ?? 'production';
+  const profileExclusions = profile === 'production' ? ['Samples/**', 'Tests/**', 'Tools/**'] : [];
+  return {
+    profile,
+    target: suppliedTarget ?? environment.scriptLibraryDir ?? './SM-Exports/ScriptLibrary',
+    uatDirectory: environment.uatDir ?? './SM-UAT',
+    excludedPatterns: [...profileExclusions, ...options.excludedPatterns],
+  };
 }
 
 async function readJson<T>(path: string): Promise<T> {
@@ -89,7 +125,24 @@ async function readJson<T>(path: string): Promise<T> {
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {
-  await writeFile(resolve(path), `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  const destination = resolve(path);
+  await mkdir(dirname(destination), { recursive: true });
+  await writeFile(destination, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+async function readBaseline(path: string): Promise<UatBaselineReport> {
+  const baseline = await readJson<UatBaselineReport>(path);
+  if (baseline.schemaVersion !== UAT_BASELINE_SCHEMA_VERSION
+    && baseline.schemaVersion !== LEGACY_UAT_BASELINE_SCHEMA_VERSION) {
+    throw new Error(`Unsupported UAT baseline schema: ${String(baseline.schemaVersion)}`);
+  }
+  return baseline;
+}
+
+function relativeCorpusRoot(path: string): string {
+  const resolved = resolve(path);
+  const root = resolve(process.cwd());
+  return resolved.startsWith(root) ? resolved.slice(root.length).replaceAll('\\', '/').replace(/^\/+/, '') || '.' : 'external-corpus';
 }
 
 if (require.main === module) {
