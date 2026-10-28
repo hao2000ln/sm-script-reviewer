@@ -8,7 +8,6 @@ const generatedOnly = [
   'dist/vscode-extension/tests',
   'dist/src/cli',
   'dist/src/reporting',
-  'dist/src/source',
 ];
 
 for (const relativePath of generatedOnly) {
