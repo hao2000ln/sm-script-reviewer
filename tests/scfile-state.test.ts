@@ -11,6 +11,13 @@ function analyze(content: string) {
   return getScFileStateAnalysis(createRuleContext(createAnalysisArtifact(source)));
 }
 
+function selectedFields(result: ReturnType<typeof analyze>, index = 0): readonly string[] {
+  const selection = result.objects[index]?.selectedFields;
+  assert.ok(selection, `expected SCFile object at index ${index}`);
+  assert.equal(selection.kind, 'selected-fields');
+  return selection.fields;
+}
+
 test('tracks a READONLY SCFile identity through a local alias and records write evidence', () => {
   const result = analyze("var f = new SCFile('contacts', SCFILE_READONLY);\nvar alias = f;\nalias.doUpdate();");
   const state = result.objects[0];
@@ -43,6 +50,60 @@ test('does not treat a deferred closure over an outer SCFile as executed state',
   const result = analyze("var f = new SCFile('contacts', SCFILE_READONLY);\nfunction later() { f.doUpdate(); }");
   assert.equal(result.objects[0].methodCalls.length, 0);
   assert.ok(result.unsupported.some((message) => message.includes('interprocedural')));
+});
+
+test('does not apply deferred function declaration setFields calls to outer execution state', () => {
+  const result = analyze(`
+var f = new SCFile('contacts', SCFILE_READONLY);
+f.setFields(['contact.name']);
+function configureLater() {
+  f.setFields(['phone']);
+}
+`);
+  assert.deepEqual(selectedFields(result), ['contact.name']);
+});
+
+test('keeps local SCFile state isolated for functions that reuse the same variable name', () => {
+  const result = analyze(`
+function contacts() {
+  var file = new SCFile('contacts', SCFILE_READONLY);
+  file.setFields(['contact.name']);
+}
+function phones() {
+  var file = new SCFile('phones', SCFILE_READONLY);
+  file.setFields(['phone']);
+}
+`);
+  assert.equal(result.objects.length, 2);
+  assert.equal(result.objects[0].tableName, 'contacts');
+  assert.deepEqual(selectedFields(result, 0), ['contact.name']);
+  assert.equal(result.objects[1].tableName, 'phones');
+  assert.deepEqual(selectedFields(result, 1), ['phone']);
+});
+
+test('does not apply a declaration before a constructor as an invocation of its captured state', () => {
+  const result = analyze(`
+function configureLater() {
+  f.setFields(['phone']);
+}
+var f = new SCFile('contacts', SCFILE_READONLY);
+f.setFields(['contact.name']);
+`);
+  assert.deepEqual(selectedFields(result), ['contact.name']);
+});
+
+test('tracks multiple independent SCFile objects in one function without cross-object state', () => {
+  const result = analyze(`
+function load() {
+  var contacts = new SCFile('contacts', SCFILE_READONLY);
+  var phones = new SCFile('phones', SCFILE_READONLY);
+  contacts.setFields(['contact.name']);
+  phones.setFields(['phone']);
+}
+`);
+  assert.equal(result.objects.length, 2);
+  assert.deepEqual(selectedFields(result, 0), ['contact.name']);
+  assert.deepEqual(selectedFields(result, 1), ['phone']);
 });
 
 test('merges mutually exclusive setFields selections conservatively', () => {

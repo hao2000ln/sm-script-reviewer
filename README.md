@@ -70,6 +70,22 @@ empty directory is a successful empty review.
 The JSON contract is documented in
 [`docs/reporting-schema-v1.md`](docs/reporting-schema-v1.md).
 
+## Offline UAT baseline
+
+For a local, approved ScriptLibrary export folder, create an offline static
+baseline and optional classification template. This does not connect to SM or
+send source to AI:
+
+```bash
+npm run uat:baseline -- ./approved-scriptlibrary-export \
+  --output ./uat-baseline.json --write-manifest ./uat-labels.json
+```
+
+The workflow preserves path-qualified finding identities, tracks manual
+`TRUE_POSITIVE`/`FALSE_POSITIVE`/`NEEDS_VERIFICATION` labels, and reports
+unmatched labels rather than silently calling changed findings resolved. See
+[`uat/phase-a/README.md`](uat/phase-a/README.md).
+
 ## Optional AI review
 
 AI remains disabled unless `--ai` is supplied. Remote transmission additionally

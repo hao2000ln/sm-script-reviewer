@@ -23,6 +23,15 @@ test('keeps English and unknown translations unchanged', () => {
   assert.equal(localizeDiagnostic(unknown, 'en').message, 'Original message');
   assert.equal(localizeDiagnostic(unknown, 'vi').message, 'Original message');
 });
+test('Vietnamese presentation preserves the static rule ID and end-exclusive source range', () => {
+  const original: ReviewDiagnosticData = {
+    ...diagnostic('SM-SCF-001', 'write'),
+    range: { start: { line: 4, character: 2 }, end: { line: 4, character: 13 } },
+  };
+  const localized = localizeDiagnostic(original, 'vi');
+  assert.equal(localized.code, 'SM-SCF-001');
+  assert.deepEqual(localized.range, original.range);
+});
 test('auto language follows Vietnamese VS Code UI only', () => {
   assert.equal(resolveLanguage('auto', 'vi'), 'vi');
   assert.equal(resolveLanguage('auto', 'en-us'), 'en');

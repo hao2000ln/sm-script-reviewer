@@ -113,11 +113,10 @@ function selectionFor(
         : afterCondition;
       return mergeSelection(left, right);
     }
-    if (ts.isFunctionDeclaration(statement)) {
-      // Calls on captured outer variables have no matching event; local SCFile
-      // objects are independently evaluated when their own state is projected.
-      return statement.body ? processStatements(statement.body.statements, selection) : selection;
-    }
+    // A declaration does not execute its body. The state projection starts at
+    // the constructor's own execution scope, so nested function bodies are
+    // deliberately excluded even when they capture an outer SCFile name.
+    if (ts.isFunctionDeclaration(statement)) return selection;
     if (ts.isForStatement(statement) || ts.isForInStatement(statement) || ts.isForOfStatement(statement)
       || ts.isWhileStatement(statement) || ts.isDoStatement(statement)
       || ts.isSwitchStatement(statement) || ts.isTryStatement(statement)) {
@@ -136,7 +135,33 @@ function selectionFor(
     return next;
   };
 
-  return processStatements(sourceFile.statements, initial);
+  return processStatements(executionScopeStatements(construction, sourceFile), initial);
+}
+
+function executionScopeStatements(
+  construction: SmConstructionEvent,
+  sourceFile: ts.SourceFile,
+): readonly ts.Statement[] {
+  if (construction.containingFunctionId === '<source>') return sourceFile.statements;
+  let body: ts.Block | undefined;
+  const visit = (node: ts.Node): void => {
+    if (body || !isExecutableFunction(node)) {
+      ts.forEachChild(node, visit);
+      return;
+    }
+    const id = `function:${node.getStart(sourceFile)}`;
+    if (id === construction.containingFunctionId && node.body && ts.isBlock(node.body)) {
+      body = node.body;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return body?.statements ?? [];
+}
+
+function isExecutableFunction(node: ts.Node): node is ts.FunctionLikeDeclaration {
+  return ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node);
 }
 
 function applyControlOnce(
