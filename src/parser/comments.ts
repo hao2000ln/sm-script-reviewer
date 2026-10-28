@@ -82,8 +82,10 @@ export function findLeadingComment(
 function isContiguousWhitespace(text: string): boolean {
   if (!/^\s*$/u.test(text)) return false;
 
-  // One line break separates adjacent source lines. Two indicate a blank line.
-  return !/(?:\r\n|\r|\n)[\t\f\v ]*(?:\r\n|\r|\n)/u.test(text);
+  // Count CRLF atomically. A regex looking for two breaks can backtrack and
+  // incorrectly treat one CRLF sequence as `\r` followed by `\n`.
+  const lineBreakCount = text.match(/\r\n|\r|\n/gu)?.length ?? 0;
+  return lineBreakCount <= 1;
 }
 
 function classifyTrailingComments(

@@ -15,6 +15,7 @@ const required = [
   'extension/dist/vscode-extension/src/extension.js',
   'extension/dist/src/reviewer/review.js',
   'extension/dist/src/ai/orchestrator.js',
+  'extension/dist/src/source/loader.js',
   'extension/node_modules/typescript/lib/typescript.js',
 ];
 for (const path of required) assert.ok(entries.includes(path), `Missing required VSIX entry: ${path}`);

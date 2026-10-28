@@ -204,6 +204,11 @@ test('uses the same location contract with CRLF input', () => {
   assert.deepEqual(result.functions[0].start, { line: 2, column: 1, offset: 9 });
 });
 
+test('associates an adjacent leading comment with a CRLF function declaration', () => {
+  const result = inspect('// Count records.\r\nfunction countFile() {}\r\n');
+  assert.equal(result.functions[0].leadingComment, '// Count records.');
+});
+
 test('returns diagnostics and recovers independent functions when possible', () => {
   const result = inspect('function before() {}\nconst = ;\nfunction after() {}');
 
