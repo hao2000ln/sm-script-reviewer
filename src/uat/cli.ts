@@ -20,12 +20,15 @@ Options:
   --help                     Show this help`;
 
 export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
-  const [target, ...rest] = args;
-  if (!target || target === '--help' || target === '-h') {
+  if (args.includes('--help') || args.includes('-h')) {
     process.stdout.write(`${USAGE}\n`);
-    return target ? 0 : 2;
+    return 0;
   }
-  const options = parseOptions(rest);
+  const { target, ...options } = parseUatArguments(args);
+  if (!target) {
+    process.stdout.write(`${USAGE}\n`);
+    return 2;
+  }
   const manifest = options.manifest ? await readJson<UatManifest>(options.manifest) : undefined;
   const baseline = await createUatBaseline(target, {
     manifest,
@@ -45,6 +48,7 @@ export async function runUatCommand(args: readonly string[]): Promise<0 | 2> {
 }
 
 interface ParsedOptions {
+  readonly target?: string;
   readonly manifest?: string;
   readonly output?: string;
   readonly previous?: string;
@@ -52,7 +56,8 @@ interface ParsedOptions {
   readonly excludedPatterns: readonly string[];
 }
 
-function parseOptions(args: readonly string[]): ParsedOptions {
+export function parseUatArguments(args: readonly string[]): ParsedOptions {
+  let target: string | undefined;
   let manifest: string | undefined;
   let output: string | undefined;
   let previous: string | undefined;
@@ -60,8 +65,13 @@ function parseOptions(args: readonly string[]): ParsedOptions {
   const excludedPatterns: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const option = args[index];
+    if (!option.startsWith('-')) {
+      if (target) throw new Error(`Unexpected source path: ${option}`);
+      target = option;
+      continue;
+    }
     const value = args[index + 1];
-    if (!value || value.startsWith('--')) throw new Error(`Missing value for ${option}`);
+    if (!value || value.startsWith('-')) throw new Error(`Missing value for ${option}`);
     index += 1;
     if (option === '--manifest') manifest = value;
     else if (option === '--output') output = value;
@@ -70,7 +80,8 @@ function parseOptions(args: readonly string[]): ParsedOptions {
     else if (option === '--exclude') excludedPatterns.push(value);
     else throw new Error(`Unknown option: ${option}`);
   }
-  return { manifest, output, previous, writeManifest, excludedPatterns };
+  if (previous && !output) throw new Error('--previous requires --output to preserve the comparison result');
+  return { target, manifest, output, previous, writeManifest, excludedPatterns };
 }
 
 async function readJson<T>(path: string): Promise<T> {
@@ -81,7 +92,9 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(resolve(path), `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-runUatCommand(process.argv.slice(2)).then(
-  (code) => { process.exitCode = code; },
-  (error) => { console.error(error instanceof Error ? error.message : String(error)); process.exitCode = 2; },
-);
+if (require.main === module) {
+  runUatCommand(process.argv.slice(2)).then(
+    (code) => { process.exitCode = code; },
+    (error) => { console.error(error instanceof Error ? error.message : String(error)); process.exitCode = 2; },
+  );
+}

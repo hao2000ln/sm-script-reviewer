@@ -46,6 +46,24 @@ test('records reassignment but stops tracking calls after the identity becomes u
   assert.equal(state.methodCalls.length, 0);
 });
 
+test('keeps a shadowed alias and unknown calls conservative without false SCFile state mutation', () => {
+  const result = analyze(`
+var file = new SCFile('contacts', SCFILE_READONLY);
+var alias = file;
+alias.setFields(['contact.name']);
+function nested() {
+  var alias = new SCFile('phones', SCFILE_READONLY);
+  alias.setFields(['phone']);
+}
+file.customWrapper();
+`);
+  assert.equal(result.objects.length, 2);
+  assert.equal(result.objects[0].selectedFields.kind, 'unknown');
+  assert.deepEqual(selectedFields(result, 1), ['phone']);
+  assert.equal(result.objects[0].methodCalls.some(({ method }) => method === 'setFields'), true);
+  assert.equal(result.objects[0].methodCalls.some(({ method }) => method === 'customWrapper'), false);
+});
+
 test('does not treat a deferred closure over an outer SCFile as executed state', () => {
   const result = analyze("var f = new SCFile('contacts', SCFILE_READONLY);\nfunction later() { f.doUpdate(); }");
   assert.equal(result.objects[0].methodCalls.length, 0);

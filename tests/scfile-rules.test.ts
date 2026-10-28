@@ -86,6 +86,15 @@ test('SM-SCF-002 does not duplicate an invalid-argument finding on the same call
   assert.equal(findings(source, 'SM-SCF-003').length, 1);
 });
 
+test('uncertain SCFile receiver state does not create a field-contract false positive', () => {
+  const result = run(`
+var f = new SCFile('contacts', SCFILE_READONLY);
+f.setFields(['contact.name']);
+f.customWrapper();
+`);
+  assert.equal(result.findings.filter(({ ruleId }) => ruleId.startsWith('SM-SCF-')).length, 0);
+});
+
 test('SM-SCF-004 reports only proven constructor count and literal-type violations', () => {
   const found = findings(`
 new SCFile('contacts', SCFILE_READONLY);

@@ -25,3 +25,8 @@ Branch merging is unchanged: identical known selections remain known; distinct
 or one-sided selections become unknown. Alias reassignment continues to end
 tracking for that alias. This change neither adds nor changes verified SCFile API
 contracts or the P0 findings `SM-SCF-001` through `SM-SCF-004`.
+
+Unknown method calls on a tracked receiver make field selection unknown. The
+reviewer must not derive a field-selection contract finding from that uncertain
+state. Shadowed names in deferred functions retain their own local identities
+and do not mutate an outer object's state.

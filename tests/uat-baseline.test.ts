@@ -10,6 +10,9 @@ import {
   renderVietnameseSummary,
   type UatManifest,
 } from '../src/uat/baseline';
+import { review } from '../src/reviewer/review';
+import type { BatchReviewResult } from '../src/reviewer/batch';
+import type { SourceDocument } from '../src/core/types';
 
 async function withCorpus(run: (root: string) => Promise<void>): Promise<void> {
   const root = await mkdtemp(join(tmpdir(), 'sm-reviewer-uat-'));
@@ -64,6 +67,65 @@ test('UAT baseline persists manual classifications by fingerprint and keeps dete
   });
 });
 
+test('UAT baseline rejects invalid, corrupted, duplicate, and stale matching manifest labels', async () => {
+  await withCorpus(async (root) => {
+    await source(root, 'one.js', 'function one() { print("x"); }');
+    const baseline = await createUatBaseline(root);
+    const finding = baseline.findings.find(({ ruleId }) => ruleId === 'SM-DBG-001')!;
+    const entry = { identity: finding.identity, fingerprint: finding.fingerprint, classification: 'TRUE_POSITIVE' as const };
+    await assert.rejects(
+      () => createUatBaseline(root, { manifest: { schemaVersion: '0.0.0', classifications: [] } as unknown as UatManifest }),
+      /Unsupported UAT manifest schema/u,
+    );
+    await assert.rejects(
+      () => createUatBaseline(root, { manifest: { schemaVersion: '1.0.0', classifications: [{ ...entry, classification: 'INVALID' as never }] } }),
+      /invalid classification/u,
+    );
+    await assert.rejects(
+      () => createUatBaseline(root, { manifest: { schemaVersion: '1.0.0', classifications: [entry, entry] } }),
+      /duplicate or empty identity/u,
+    );
+    await assert.rejects(
+      () => createUatBaseline(root, { manifest: { schemaVersion: '1.0.0', classifications: [{ ...entry, fingerprint: 'stale' }] } }),
+      /fingerprint does not match/u,
+    );
+    await assert.rejects(
+      () => createUatBaseline(root, { manifest: { schemaVersion: '1.0.0', classifications: null as never } }),
+      /classifications must be an array/u,
+    );
+  });
+});
+
+test('UAT baseline preserves unmatched historical labels but marks rule-error execution coverage incomplete', async () => {
+  await withCorpus(async (root) => {
+    const document: SourceDocument = {
+      id: join(root, 'one.js'), filePath: join(root, 'one.js'),
+      content: 'function one() { print("x"); }', hash: 'fixture-hash',
+    };
+    const result = review(document);
+    const batch: BatchReviewResult = {
+      files: [{ filePath: document.filePath, result: { ...result, ruleErrors: [{ ruleId: 'TEST-THROW', message: 'intentional test failure' }] } }],
+      failures: [], skippedFileCount: 0,
+    };
+    const report = await createUatBaseline(root, {
+      manifest: {
+        schemaVersion: '1.0.0', corpusComplete: true,
+        classifications: [{ identity: 'historical-identity', fingerprint: 'historical-fingerprint', classification: 'FALSE_POSITIVE' }],
+      },
+      reviewTarget: async () => batch,
+    });
+    assert.equal(report.coverage.corpus.status, 'complete');
+    assert.equal(report.coverage.execution.status, 'incomplete');
+    assert.equal(report.coverage.execution.ruleErrorCount, 1);
+    assert.deepEqual(report.coverage.execution.ruleErrors, [{
+      relativeFilePath: 'one.js', ruleId: 'TEST-THROW', message: 'intentional test failure',
+    }]);
+    assert.equal(report.coverage.semantic.status, 'not-established');
+    assert.equal(report.coverage.status, 'incomplete');
+    assert.equal(report.unmatchedClassifications.length, 1);
+  });
+});
+
 test('UAT comparison accounts for changed and removed source instead of calling labels resolved', async () => {
   await withCorpus(async (root) => {
     await source(root, 'changed.js', 'function target() { print("x"); }');
@@ -93,6 +155,9 @@ test('UAT baseline includes approved SCFile findings without claiming runtime ac
     const finding = report.findings.find(({ ruleId }) => ruleId === 'SM-SCF-001');
     assert.ok(finding);
     assert.equal(finding!.classification, 'deterministic');
-    assert.equal(report.coverage.status, 'complete');
+    assert.equal(report.coverage.corpus.status, 'complete');
+    assert.equal(report.coverage.execution.status, 'complete');
+    assert.equal(report.coverage.semantic.status, 'not-established');
+    assert.equal(report.coverage.status, 'incomplete');
   });
 });

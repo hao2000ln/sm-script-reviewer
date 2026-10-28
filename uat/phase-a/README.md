@@ -50,9 +50,24 @@ npm.cmd run uat:baseline -- /d/SM-Exports/ScriptLibrary \
 ```
 
 The console summary is Vietnamese. `--output` is a stable machine-readable
-JSON report. A result marked `coverage.status: "incomplete"` means the corpus
-was not declared complete, unsupported/excluded files exist, a file failed to
-load, parser diagnostics occurred, or valid-only rules were skipped.
+JSON report. Classification manifests are validated strictly: schema version,
+classification enum, unique identity, and the fingerprint of every matching
+current finding must agree. Historical entries whose identity no longer exists
+remain `unmatchedClassifications`; they are not migrated or treated as resolved.
+
+Coverage is deliberately split:
+
+- `coverage.corpus`: whether the owner declared the corpus complete and whether
+  files were excluded or unsupported;
+- `coverage.execution`: file failures, parser/syntax gating, and every
+  `ruleErrors` entry with its affected file and rule ID;
+- `coverage.semantic`: always `not-established` in this offline workflow.
+
+The aggregate `coverage.status` is therefore `incomplete`: a static baseline
+and manual labels cannot establish complete SM runtime semantic coverage.
+Fingerprints contain the source hash, so a source edit can turn a prior finding
+into a new/unmatched entry even when it appears conceptually similar. Labels are
+never migrated heuristically.
 
 Synthetic fixtures in automated tests are only regression data. They are not
 evidence of production accuracy or SM 9.8x runtime compatibility.

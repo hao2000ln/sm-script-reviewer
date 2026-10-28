@@ -24,6 +24,8 @@ export interface BatchReviewResult {
 
 export interface BatchReviewOptions {
   readonly load?: (path: string) => Promise<SourceDocument>;
+  /** Test/host seam; the default remains the built-in static reviewer. */
+  readonly reviewSource?: (source: SourceDocument, config: RuleSetConfig) => RuleRunResult;
   readonly config?: RuleSetConfig;
   readonly excludedPatterns?: readonly string[];
 }
@@ -49,12 +51,13 @@ export async function reviewTarget(
     ignoreSymlinks: true,
   });
   const load = options.load ?? loadSource;
+  const reviewSource = options.reviewSource ?? review;
   const files: ReviewedFile[] = [];
   const failures: ReviewFailure[] = [];
 
   for (const filePath of discovery.paths) {
     try {
-      files.push({ filePath, result: review(await load(filePath), config) });
+      files.push({ filePath, result: reviewSource(await load(filePath), config) });
     } catch (error) {
       failures.push({ filePath, message: errorMessage(error) });
     }

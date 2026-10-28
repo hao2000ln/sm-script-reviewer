@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { relative, resolve } from 'node:path';
-import { reviewTarget } from '../reviewer/batch';
+import { reviewTarget, type BatchReviewResult } from '../reviewer/batch';
 import type { Finding, RuleClassification, RuleSetConfig } from '../rules/types';
 
 export const UAT_BASELINE_SCHEMA_VERSION = '1.0.0';
@@ -27,6 +27,8 @@ export interface UatBaselineOptions {
   readonly config?: RuleSetConfig;
   readonly excludedPatterns?: readonly string[];
   readonly generatedAt?: string;
+  /** Internal host seam for deterministic UAT regression tests. */
+  readonly reviewTarget?: typeof reviewTarget;
 }
 
 export interface UatFinding extends Finding {
@@ -40,6 +42,21 @@ export interface UatFinding extends Finding {
 
 export interface UatCoverage {
   readonly status: 'complete' | 'incomplete';
+  readonly corpus: {
+    readonly status: 'complete' | 'incomplete';
+    readonly reasons: readonly string[];
+  };
+  readonly execution: {
+    readonly status: 'complete' | 'incomplete';
+    readonly ruleErrorCount: number;
+    readonly ruleErrors: readonly { readonly relativeFilePath: string; readonly ruleId: string; readonly message: string }[];
+    readonly reasons: readonly string[];
+  };
+  /** Static review and local labels cannot establish SM runtime semantic coverage. */
+  readonly semantic: {
+    readonly status: 'not-established';
+    readonly reasons: readonly string[];
+  };
   readonly corpusDeclaredComplete: boolean;
   readonly unsupportedFileCount: number;
   readonly fileFailureCount: number;
@@ -89,13 +106,13 @@ export async function createUatBaseline(
   options: UatBaselineOptions = {},
 ): Promise<UatBaselineReport> {
   const targetPath = resolve(target);
-  const batch = await reviewTarget(targetPath, {
+  const runTarget = options.reviewTarget ?? reviewTarget;
+  const batch = await runTarget(targetPath, {
     config: options.config,
     excludedPatterns: options.excludedPatterns,
   });
   const manifest = options.manifest ?? emptyManifest();
   validateManifest(manifest);
-  const labels = new Map(manifest.classifications.map((entry) => [entry.identity, entry]));
   const files = batch.files.map((file) => ({
     relativeFilePath: relativePath(targetPath, file.filePath),
     sourceHash: file.result.analysis.source.hash,
@@ -106,40 +123,47 @@ export async function createUatBaseline(
   const findings = batch.files.flatMap((file) => file.result.findings.map((finding) => {
     const relativeFilePath = relativePath(targetPath, file.filePath);
     const identity = findingIdentity(relativeFilePath, finding);
-    const label = labels.get(identity);
     return {
       ...finding,
       filePath: file.filePath,
       relativeFilePath,
       identity,
+    };
+  })).sort(compareFinding);
+  validateManifestFindings(manifest, findings);
+  const labels = new Map(manifest.classifications.map((entry) => [entry.identity, entry]));
+  const classifiedFindings = findings.map((finding) => {
+    const label = labels.get(finding.identity);
+    return {
+      ...finding,
       ...(label ? { uatClassification: label.classification } : {}),
       ...(label?.note ? { classificationNote: label.note } : {}),
     };
-  })).sort(compareFinding);
-  const matchedIdentities = new Set(findings.map(({ identity }) => identity));
+  });
+  const matchedIdentities = new Set(classifiedFindings.map(({ identity }) => identity));
   const unmatchedClassifications = manifest.classifications
     .filter(({ identity }) => !matchedIdentities.has(identity))
     .sort((left, right) => left.identity.localeCompare(right.identity));
-  const coverage = calculateCoverage(batch, manifest);
-  const count = (value: UatFindingClassification) => findings.filter((finding) => finding.uatClassification === value).length;
+  const coverage = calculateCoverage(batch, manifest, targetPath);
+  const count = (value: UatFindingClassification) => classifiedFindings.filter((finding) => finding.uatClassification === value).length;
   return {
     schemaVersion: UAT_BASELINE_SCHEMA_VERSION,
     generatedAt: options.generatedAt ?? new Date().toISOString(),
     targetPath,
     files,
-    findings,
-    unclassifiedFindings: findings.filter(({ uatClassification }) => !uatClassification).map(({ identity }) => identity),
+    findings: classifiedFindings,
+    unclassifiedFindings: classifiedFindings.filter(({ uatClassification }) => !uatClassification).map(({ identity }) => identity),
     unmatchedClassifications,
     coverage,
     summary: {
       files: files.length,
-      findings: findings.length,
-      deterministicFindings: findings.filter(({ classification }) => classification === 'deterministic').length,
-      heuristicFindings: findings.filter(({ classification }) => classification === 'heuristic').length,
+      findings: classifiedFindings.length,
+      deterministicFindings: classifiedFindings.filter(({ classification }) => classification === 'deterministic').length,
+      heuristicFindings: classifiedFindings.filter(({ classification }) => classification === 'heuristic').length,
       truePositives: count('TRUE_POSITIVE'),
       falsePositives: count('FALSE_POSITIVE'),
       needsVerification: count('NEEDS_VERIFICATION'),
-      unclassified: findings.filter(({ uatClassification }) => !uatClassification).length,
+      unclassified: classifiedFindings.filter(({ uatClassification }) => !uatClassification).length,
     },
   };
 }
@@ -201,32 +225,68 @@ function emptyManifest(): UatManifest {
 }
 
 function validateManifest(manifest: UatManifest): void {
-  if (manifest.schemaVersion !== UAT_BASELINE_SCHEMA_VERSION) {
-    throw new Error(`Unsupported UAT manifest schema: ${manifest.schemaVersion}`);
+  if (!isPlainObject(manifest) || manifest.schemaVersion !== UAT_BASELINE_SCHEMA_VERSION) {
+    throw new Error(`Unsupported UAT manifest schema: ${String((manifest as { schemaVersion?: unknown })?.schemaVersion)}`);
   }
+  if (manifest.corpusComplete !== undefined && typeof manifest.corpusComplete !== 'boolean') throw new Error('UAT manifest corpusComplete must be boolean');
+  if (!Array.isArray(manifest.classifications)) throw new Error('UAT manifest classifications must be an array');
   const seen = new Set<string>();
   for (const entry of manifest.classifications) {
-    if (!entry.identity || !entry.fingerprint || seen.has(entry.identity)) throw new Error('UAT manifest has duplicate or empty identity');
+    if (!isPlainObject(entry) || typeof entry.identity !== 'string' || !entry.identity
+      || typeof entry.fingerprint !== 'string' || !entry.fingerprint || seen.has(entry.identity)) {
+      throw new Error('UAT manifest has duplicate or empty identity');
+    }
+    if (!isClassification(entry.classification)) throw new Error(`UAT manifest has invalid classification for ${entry.identity}`);
+    if (entry.note !== undefined && typeof entry.note !== 'string') throw new Error(`UAT manifest note must be a string for ${entry.identity}`);
     seen.add(entry.identity);
   }
 }
 
+function validateManifestFindings(manifest: UatManifest, findings: readonly UatFinding[]): void {
+  const fingerprintsByIdentity = new Map(findings.map((finding) => [finding.identity, finding.fingerprint]));
+  for (const entry of manifest.classifications) {
+    const currentFingerprint = fingerprintsByIdentity.get(entry.identity);
+    // An absent identity is historical/unmatched and remains visible in the report.
+    if (currentFingerprint !== undefined && currentFingerprint !== entry.fingerprint) {
+      throw new Error(`UAT manifest fingerprint does not match current finding: ${entry.identity}`);
+    }
+  }
+}
+
 function calculateCoverage(
-  batch: Awaited<ReturnType<typeof reviewTarget>>,
+  batch: BatchReviewResult,
   manifest: UatManifest,
+  targetPath: string,
 ): UatCoverage {
   const filesWithParseDiagnostics = batch.files.filter((file) => file.result.analysis.issues.length > 0).length;
   const filesWithSyntaxGatedRules = batch.files.filter((file) => (
     file.result.skippedRules.some(({ reason }) => reason === 'syntax-errors')
   )).length;
-  const reasons: string[] = [];
-  if (!manifest.corpusComplete) reasons.push('Corpus completeness was not declared by the owner.');
-  if (batch.skippedFileCount > 0) reasons.push('Unsupported or excluded files were skipped.');
-  if (batch.failures.length > 0) reasons.push('Some files could not be reviewed.');
-  if (filesWithParseDiagnostics > 0) reasons.push('Some files have parse diagnostics.');
-  if (filesWithSyntaxGatedRules > 0) reasons.push('Valid-only rules were skipped for syntax-invalid files.');
+  const ruleErrors = batch.files.flatMap((file) => file.result.ruleErrors.map((error) => ({
+    relativeFilePath: relativePath(targetPath, file.filePath), ruleId: error.ruleId, message: error.message,
+  }))).sort((left, right) => left.relativeFilePath.localeCompare(right.relativeFilePath) || left.ruleId.localeCompare(right.ruleId));
+  const corpusReasons: string[] = [];
+  if (!manifest.corpusComplete) corpusReasons.push('Corpus completeness was not declared by the owner.');
+  if (batch.skippedFileCount > 0) corpusReasons.push('Unsupported or excluded files were skipped.');
+  const executionReasons: string[] = [];
+  if (batch.failures.length > 0) executionReasons.push('Some files could not be reviewed.');
+  if (filesWithParseDiagnostics > 0) executionReasons.push('Some files have parse diagnostics.');
+  if (filesWithSyntaxGatedRules > 0) executionReasons.push('Valid-only rules were skipped for syntax-invalid files.');
+  if (ruleErrors.length > 0) executionReasons.push('One or more rules failed during execution.');
+  const semanticReasons = ['Static analysis and manual labels do not establish SM runtime semantic coverage.'];
+  const corpus = { status: corpusReasons.length === 0 ? 'complete' as const : 'incomplete' as const, reasons: corpusReasons };
+  const execution = {
+    status: executionReasons.length === 0 ? 'complete' as const : 'incomplete' as const,
+    ruleErrorCount: ruleErrors.length,
+    ruleErrors,
+    reasons: executionReasons,
+  };
+  const reasons = [...corpusReasons, ...executionReasons, ...semanticReasons];
   return {
-    status: reasons.length === 0 ? 'complete' : 'incomplete',
+    status: 'incomplete',
+    corpus,
+    execution,
+    semantic: { status: 'not-established', reasons: semanticReasons },
     corpusDeclaredComplete: manifest.corpusComplete === true,
     unsupportedFileCount: batch.skippedFileCount,
     fileFailureCount: batch.failures.length,
@@ -234,6 +294,14 @@ function calculateCoverage(
     filesWithSyntaxGatedRules,
     reasons,
   };
+}
+
+function isClassification(value: unknown): value is UatFindingClassification {
+  return value === 'TRUE_POSITIVE' || value === 'FALSE_POSITIVE' || value === 'NEEDS_VERIFICATION';
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function relativePath(targetPath: string, filePath: string): string {
