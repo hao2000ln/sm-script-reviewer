@@ -21,7 +21,7 @@ change it only when the project owner has confirmed the export is complete.
 ```bash
 npm.cmd run uat:baseline -- --profile production \
   --output ./SM-UAT/baseline-production-001.json \
-  --write-manifest /d/SM-UAT/labels.json
+  --write-manifest ./SM-UAT/labels.json
 ```
 
 Open `labels.json` and classify every selected entry with one of:
@@ -37,9 +37,9 @@ identical finding in one ScriptLibrary from labeling a different file.
 Run the labeled baseline:
 
 ```bash
-npm.cmd run uat:baseline -- /d/SM-Exports/ScriptLibrary \
-  --manifest /d/SM-UAT/labels.json \
-  --output /d/SM-UAT/baseline-002.json
+npm.cmd run uat:baseline -- ./SM-Exports/ScriptLibrary \
+  --manifest ./SM-UAT/labels.json \
+  --output ./SM-UAT/baseline-production-002.json
 ```
 
 For a full snapshot, including `Samples`, `Tests`, and `Tools`:
@@ -62,10 +62,11 @@ labels that no longer match are retained as `unmatchedPriorClassifications`;
 they are never automatically considered resolved.
 
 ```bash
-npm.cmd run uat:baseline -- /d/SM-Exports/ScriptLibrary \
-  --manifest /d/SM-UAT/labels.json \
-  --previous /d/SM-UAT/baseline-002.json \
-  --output /d/SM-UAT/baseline-003.json \
+npm.cmd run uat:baseline -- ./SM-Exports/ScriptLibrary \
+  --profile production \
+  --manifest ./SM-UAT/labels.json \
+  --previous ./SM-UAT/baseline-production-002.json \
+  --output ./SM-UAT/baseline-production-003.json \
   --exclude 'generated/**'
 ```
 
@@ -74,11 +75,16 @@ JSON report. Classification manifests are validated strictly: schema version,
 classification enum, unique identity, and the fingerprint of every matching
 current finding must agree. Historical entries whose identity no longer exists
 remain `unmatchedClassifications`; they are not migrated or treated as resolved.
+The serialized report never exposes local absolute paths: `targetPath`,
+`findings[].sourceId`, and `findings[].filePath` are corpus-relative labels.
+The reviewer may retain absolute paths internally while it runs; they are not
+part of the shareable baseline JSON.
 
 Coverage is deliberately split:
 
 - `coverage.corpus`: whether the owner declared the corpus complete and whether
-  files were excluded or unsupported;
+  files were unsupported. Intentional profile exclusions are recorded in
+  `provenance.appliedExclusions` and do not increment `unsupportedFileCount`;
 - `coverage.execution`: file failures, parser/syntax gating, and every
   `ruleErrors` entry with its affected file and rule ID;
 - `coverage.semantic`: always `not-established` in this offline workflow.

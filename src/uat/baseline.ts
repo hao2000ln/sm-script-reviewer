@@ -39,6 +39,9 @@ export interface UatBaselineOptions {
 }
 
 export interface UatFinding extends Finding {
+  /** Shareable replacement for the core finding's absolute source ID. */
+  readonly sourceId: string;
+  /** Shareable replacement for the internal absolute source file path. */
   readonly filePath: string;
   readonly relativeFilePath: string;
   /** Stable only while the underlying finding fingerprint remains unchanged. */
@@ -147,7 +150,10 @@ export async function createUatBaseline(
     const identity = findingIdentity(relativeFilePath, finding);
     return {
       ...finding,
-      filePath: file.filePath,
+      // The core reviewer retains absolute paths internally. Baseline JSON is
+      // shareable, so expose only the corpus-relative path in both legacy fields.
+      sourceId: relativeFilePath,
+      filePath: relativeFilePath,
       relativeFilePath,
       identity,
     };

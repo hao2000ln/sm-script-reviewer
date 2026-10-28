@@ -36,6 +36,12 @@ test('explicit UAT source path overrides environment defaults and production exc
   });
 });
 
+test('UAT CLI preserves Windows-style explicit paths without treating them as options', () => {
+  const parsed = parseUatArguments(['C:\\SM-Exports\\ScriptLibrary', '--output', 'C:\\SM-UAT\\baseline.json']);
+  assert.equal(parsed.target, 'C:\\SM-Exports\\ScriptLibrary');
+  assert.equal(parsed.output, 'C:\\SM-UAT\\baseline.json');
+});
+
 test('UAT environment values are optional and a missing output directory is created locally', async () => {
   const root = await mkdtemp(join(tmpdir(), 'sm-reviewer-uat-cli-'));
   try {
@@ -47,8 +53,17 @@ test('UAT environment values are optional and a missing output directory is crea
     const output = join(root, 'new-output', 'baseline.json');
     await writeFile(source, 'print("debug");', 'utf8');
     assert.equal(await runUatCommand([source, '--profile', 'full', '--output', output]), 0);
-    const report = JSON.parse(await readFile(output, 'utf8')) as { provenance: { profile: string } };
+    const serialized = await readFile(output, 'utf8');
+    const report = JSON.parse(serialized) as { provenance: { profile: string } };
     assert.equal(report.provenance.profile, 'full');
+    assert.equal(serialized.includes(root), false);
+
+    const previous = join(root, 'legacy-baseline.json');
+    const compared = join(root, 'new-output', 'compared.json');
+    await writeFile(previous, JSON.stringify({ schemaVersion: '1.0.0', files: [], findings: [] }), 'utf8');
+    assert.equal(await runUatCommand([source, '--previous', previous, '--output', compared]), 0);
+    const comparison = JSON.parse(await readFile(compared, 'utf8')) as { comparison: unknown };
+    assert.ok(comparison.comparison);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

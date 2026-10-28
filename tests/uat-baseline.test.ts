@@ -66,6 +66,7 @@ test('production profile exclusions keep project-specific unknown directories vi
     ]);
     assert.deepEqual(production.provenance.includedUnknownDirectories, ['CUSTOM_EXTENSION']);
     assert.deepEqual(production.provenance.appliedExclusions, ['Samples/**', 'Tests/**', 'Tools/**']);
+    assert.equal(production.coverage.unsupportedFileCount, 0);
     const full = await createUatBaseline(root, { profile: 'full' });
     assert.equal(full.files.length, 7);
     assert.deepEqual(full.provenance.includedUnknownDirectories, []);
@@ -187,5 +188,9 @@ test('UAT baseline includes approved SCFile findings without claiming runtime ac
     assert.equal(report.schemaVersion, '1.1.0');
     assert.equal(report.targetPath.includes(root), false);
     assert.equal(report.provenance.sourceHash.length, 64);
+    const serialized = JSON.stringify(report);
+    assert.equal(serialized.includes(root), false);
+    assert.equal(finding!.sourceId, 'scfile.js');
+    assert.equal(finding!.filePath, 'scfile.js');
   });
 });
