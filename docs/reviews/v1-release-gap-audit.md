@@ -52,32 +52,46 @@ for the committed baseline snapshot.
 This corpus is incomplete evidence only. It does not establish full SM 9.8x
 runtime semantics, complete ScriptLibrary coverage, or human UAT acceptance.
 
-## Reproducible verification at the Release 1.0 candidate worktree
+## Reproducible verification at the Release 1.0 P1 candidate worktree
 
-The last committed reviewer revision inspected here is `4d94d9b`. Release
-candidate changes remain in the local working tree pending owner review and
-Git operations. The export corpus has no Git revision at that commit because
+The committed reviewer revision inspected here is
+`afae167156e6786e0daa20c453f74bce38a92436`. Release P1 candidate changes
+remain in the local working tree pending owner review and Git operations. The
+export corpus has no Git revision at that commit because
 `ESD_CRUD_NQ.js` is not tracked; its baseline-specific revision is therefore
 unavailable.
 
 The following local checks were executed without AI or SM Connector access:
 
 - TypeScript build: passed.
-- Full root unit suite: passed, **188/188**.
+- Full root unit suite: passed, **192/192**.
 - Acceptance suite: passed, 17/17.
 - Sprint 4 offline UAT: passed, 9/9 (localhost mock only).
-- Extension build and tests: passed, **26/26**.
+- Extension build and tests: passed, **28/28**.
 - CLI `v1-production` review of the current local corpus: completed with the
   expected exit code 1 for 4 findings across 12 files; no parser,
   rule, or file failures.
 - Dependency CLI scan of the same corpus: completed with exit code 0; 12
-  files, 20 `UNRESOLVED` references, zero resolved edges and zero cycles. No
-  owner-maintained runtime-name mapping was supplied, so this is deliberately
-  not evidence of missing libraries.
+  files, 20 `UNRESOLVED` references, zero resolved edges and zero cycles.
+  Execution coverage is complete, but corpus completeness is false because no
+  owner-maintained complete mapping/corpus declaration was supplied. This is
+  deliberately not evidence of missing libraries.
+- Dependency JSON regression verifies that neither source content nor an
+  absolute corpus path is serialized, including nested edge references.
 - VSIX package and archive inspection: passed (193 archive entries).
 
 These are automated/code evidence only. No normal-VS-Code manual UAT or SM
 9.8x runtime verification is claimed here.
+
+## P1 dependency-report and coverage hardening
+
+Dependency reports now expose only relative source-node identifiers, locations,
+reference metadata, confidence, and evidence. `SourceDocument`, its content,
+and absolute local paths are not part of dependency DTOs. Effective
+`corpusComplete` is false whenever declared coverage is undermined by skipped
+or limited files, load failures, injected partial source sets, or parse
+diagnostics; `MISSING` is consequently withheld. The report separately records
+declared corpus completeness, execution completeness, counts, and reasons.
 
 ## Release gates
 

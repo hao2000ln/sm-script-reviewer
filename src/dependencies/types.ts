@@ -1,4 +1,4 @@
-import type { SourceDocument, SourceLocation } from '../core/types';
+import type { SourceLocation } from '../core/types';
 
 export type DependencyReferenceStatus = 'RESOLVED' | 'MISSING' | 'UNRESOLVED' | 'DYNAMIC' | 'AMBIGUOUS';
 export type DependencyReferenceSyntax = 'property' | 'bracket';
@@ -7,7 +7,6 @@ export type DependencyMappingState = 'PROJECT_VERIFIED' | 'UNKNOWN';
 export interface DependencyRange { readonly start: SourceLocation; readonly end: SourceLocation; }
 
 export interface ExtractedDependencyReference {
-  readonly source: SourceDocument;
   readonly range: DependencyRange;
   readonly syntax: DependencyReferenceSyntax;
   readonly libraryName?: string;
@@ -78,6 +77,15 @@ export interface DependencyCorpusMetadata {
   readonly sourceHash: string;
   readonly fileCount: number;
   readonly skippedFileCount: number;
+  readonly limitedFileCount: number;
+  readonly failureCount: number;
+  readonly parseDiagnosticFileCount: number;
+  /** Owner declaration before scan-health checks. */
+  readonly declaredCorpusComplete: boolean;
+  /** False when scanning, loading, or parsing leaves dependency coverage incomplete. */
+  readonly executionComplete: boolean;
+  readonly executionIncompleteReasons: readonly string[];
+  /** Effective corpus completeness: declared complete AND execution complete. */
   readonly corpusComplete: boolean;
   readonly mappingsComplete: boolean;
   readonly caseSensitive: boolean;

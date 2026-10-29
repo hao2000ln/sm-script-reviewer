@@ -9,7 +9,7 @@ interface Scope { readonly parent?: Scope; readonly bindsLib: boolean; }
 export function extractDependencies(source: SourceDocument): readonly ExtractedDependencyReference[] {
   const artifact = createAnalysisArtifact(source);
   const results: ExtractedDependencyReference[] = [];
-  walk(artifact.sourceFile, undefined, artifact.sourceFile, source, results);
+  walk(artifact.sourceFile, undefined, artifact.sourceFile, results);
   return results.sort((left, right) => left.range.start.offset - right.range.start.offset);
 }
 
@@ -17,23 +17,21 @@ function walk(
   node: ts.Node,
   parentScope: Scope | undefined,
   sourceFile: ts.SourceFile,
-  source: SourceDocument,
   results: ExtractedDependencyReference[],
 ): void {
   const scope = createsScope(node) ? { parent: parentScope, bindsLib: scopeBindsLib(node) } : parentScope;
-  const candidate = extractReference(node, scope, sourceFile, source);
+  const candidate = extractReference(node, scope, sourceFile);
   if (candidate) {
     results.push(candidate);
     return; // A single property chain produces exactly one library reference.
   }
-  ts.forEachChild(node, (child) => walk(child, scope, sourceFile, source, results));
+  ts.forEachChild(node, (child) => walk(child, scope, sourceFile, results));
 }
 
 function extractReference(
   node: ts.Node,
   scope: Scope | undefined,
   sourceFile: ts.SourceFile,
-  source: SourceDocument,
 ): ExtractedDependencyReference | undefined {
   if (!isTopLevelLibChain(node)) return undefined;
   const chain = decomposeLibChain(node);
@@ -43,12 +41,12 @@ function extractReference(
   const shadowed = isBound(scope);
   if (chain.dynamic) {
     return {
-      source, range, syntax: 'bracket', targetExpression: chain.dynamicExpression,
+      range, syntax: 'bracket', targetExpression: chain.dynamicExpression,
       confidence: 0, evidence: 'Computed lib reference has no provable literal library target.', shadowed,
     };
   }
   return {
-    source, range, syntax: chain.syntax, libraryName: chain.libraryName,
+    range, syntax: chain.syntax, libraryName: chain.libraryName,
     confidence: shadowed ? 0 : 1,
     evidence: shadowed
       ? 'Identifier lib is lexically shadowed; this is not treated as the SM global library object.'
@@ -91,16 +89,20 @@ function decomposeLibChain(node: ts.Node): LibChain | undefined {
 }
 
 function createsScope(node: ts.Node): boolean {
-  return ts.isSourceFile(node) || ts.isFunctionLike(node) || ts.isBlock(node) || ts.isCatchClause(node);
+  return ts.isSourceFile(node) || ts.isFunctionLike(node) || ts.isBlock(node) || ts.isCatchClause(node)
+    || ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node);
 }
 
 function scopeBindsLib(scopeNode: ts.Node): boolean {
   if (ts.isFunctionLike(scopeNode)) {
-    if (scopeNode.parameters.some((parameter) => ts.isIdentifier(parameter.name) && parameter.name.text === 'lib')) return true;
+    if (scopeNode.parameters.some((parameter) => bindingNames(parameter.name).has('lib'))) return true;
     return containsVarBinding('body' in scopeNode ? scopeNode.body : undefined);
   }
-  if (ts.isCatchClause(scopeNode) && scopeNode.variableDeclaration && ts.isIdentifier(scopeNode.variableDeclaration.name)) {
-    return scopeNode.variableDeclaration.name.text === 'lib';
+  if (ts.isCatchClause(scopeNode) && scopeNode.variableDeclaration) {
+    return bindingNames(scopeNode.variableDeclaration.name).has('lib');
+  }
+  if ((ts.isForStatement(scopeNode) || ts.isForInStatement(scopeNode) || ts.isForOfStatement(scopeNode)) && scopeNode.initializer && ts.isVariableDeclarationList(scopeNode.initializer)) {
+    return scopeNode.initializer.declarations.some((declaration) => bindingNames(declaration.name).has('lib'));
   }
   return directBindings(scopeNode).has('lib');
 }
@@ -110,7 +112,7 @@ function containsVarBinding(node: ts.Node | undefined): boolean {
   let found = false;
   const visit = (current: ts.Node): void => {
     if (current !== node && ts.isFunctionLike(current)) return;
-    if (ts.isVariableDeclaration(current) && ts.isIdentifier(current.name) && current.name.text === 'lib') found = true;
+    if (ts.isVariableDeclaration(current) && bindingNames(current.name).has('lib')) found = true;
     ts.forEachChild(current, visit);
   };
   visit(node);
@@ -119,13 +121,23 @@ function containsVarBinding(node: ts.Node | undefined): boolean {
 
 function directBindings(node: ts.Node): ReadonlySet<string> {
   const names = new Set<string>();
-  const add = (declaration: ts.BindingName): void => { if (ts.isIdentifier(declaration)) names.add(declaration.text); };
+  const add = (declaration: ts.BindingName): void => { for (const name of bindingNames(declaration)) names.add(name); };
   const children = ts.isSourceFile(node) || ts.isBlock(node) ? node.statements : [];
   for (const child of children) {
     if (ts.isVariableStatement(child)) for (const declaration of child.declarationList.declarations) add(declaration.name);
     if (ts.isFunctionDeclaration(child) && child.name) names.add(child.name.text);
     if (ts.isClassDeclaration(child) && child.name) names.add(child.name.text);
   }
+  return names;
+}
+
+function bindingNames(binding: ts.BindingName): ReadonlySet<string> {
+  const names = new Set<string>();
+  const visit = (node: ts.BindingName): void => {
+    if (ts.isIdentifier(node)) names.add(node.text);
+    else for (const element of node.elements) if (ts.isBindingElement(element)) visit(element.name);
+  };
+  visit(binding);
   return names;
 }
 

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { join } from 'node:path';
 import { OpenAICompatibleProvider } from '../../src/ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../../src/rules/builtin';
 import type { FindingEvidence } from '../../src/rules/types';
@@ -16,7 +15,7 @@ import {
 } from './review-adapter';
 import { ReviewLifecycle, shouldReviewOnSave } from './review-lifecycle';
 import { reviewFolder } from './folder-review-adapter';
-import { analyzeDependencyFolder } from './dependency-adapter';
+import { analyzeDependencyFolder, resolveDependencyReferencePath } from './dependency-adapter';
 import { calculateImpact } from '../../src/dependencies/graph';
 import { renderDependencyText, type DependencyReport } from '../../src/dependencies/report';
 import type { DependencyAnalysisConfig, DependencyAnalysisResult, ResolvedDependencyReference } from '../../src/dependencies/types';
@@ -118,7 +117,11 @@ class ExtensionReviewController implements vscode.HoverProvider {
     if (!folder) return;
     const snapshots = new Map<string, string>();
     for (const document of this.api.workspace.textDocuments) if (document.isDirty && isSupportedDocument({ fileName: document.fileName, languageId: document.languageId })) snapshots.set(document.fileName.toLowerCase(), document.getText());
-    const result = await analyzeDependencyFolder(folder.fsPath, { config: this.dependencyConfig(), maxFiles: this.setting<number>('folderReview.maxFiles'), openDocuments: snapshots });
+    const result = await this.api.window.withProgress({ location: this.api.ProgressLocation.Notification, title: 'SM Reviewer: analyzing dependencies', cancellable: true }, async (progress, token) => analyzeDependencyFolder(folder.fsPath, {
+      config: this.dependencyConfig(), maxFiles: this.setting<number>('folderReview.maxFiles'), openDocuments: snapshots,
+      isCancellationRequested: () => token.isCancellationRequested,
+      onProgress: (done, total) => progress.report({ increment: total ? 100 / total : 0, message: `${done}/${total}` }),
+    }));
     if (result.cancelled) return;
     this.#dependencyAnalysis = result.analysis; this.#dependencyRoot = folder.fsPath;
     const report: DependencyReport = { schemaVersion: '1.0.0', generatedAt: new Date().toISOString(), toolVersion: TOOL_VERSION, analysis: result.analysis };
@@ -411,7 +414,9 @@ class ExtensionReviewController implements vscode.HoverProvider {
 
   private async openDependencyReference(reference: ResolvedDependencyReference): Promise<void> {
     if (!this.#dependencyRoot) return;
-    const document = await this.api.workspace.openTextDocument(this.api.Uri.file(join(this.#dependencyRoot, reference.sourceNodeId)));
+    const target = resolveDependencyReferencePath(this.#dependencyRoot, reference.sourceNodeId);
+    if (!target) { void this.api.window.showErrorMessage('SM Reviewer: dependency reference is outside the analyzed corpus.'); return; }
+    const document = await this.api.workspace.openTextDocument(this.api.Uri.file(target));
     const start = new this.api.Position(Math.max(0, reference.range.start.line - 1), Math.max(0, reference.range.start.column - 1));
     const end = new this.api.Position(Math.max(start.line, reference.range.end.line - 1), Math.max(0, reference.range.end.column - 1));
     const editor = await this.api.window.showTextDocument(document);

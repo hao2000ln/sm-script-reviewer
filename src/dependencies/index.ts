@@ -1,7 +1,8 @@
-import { relative } from 'node:path';
+import { isAbsolute, relative } from 'node:path';
 import type { SourceDocument } from '../core/types';
 import type {
   DependencyAnalysisConfig,
+  DependencyLibraryMapping,
   DependencyMappingState,
   DependencyNode,
   ExtractedDependencyReference,
@@ -19,6 +20,7 @@ export function createDependencyIndex(
   sources: readonly SourceDocument[],
   config: DependencyAnalysisConfig = {},
 ): DependencyIndex {
+  validateDependencyAnalysisConfig(config);
   const normalizedConfig = {
     corpusComplete: config.corpusComplete === true,
     mappingsComplete: config.mappingsComplete === true,
@@ -95,6 +97,29 @@ export function createDependencyIndex(
   };
 }
 
+/** Validates owner-supplied mapping data for every caller, not only the CLI. */
+export function validateDependencyAnalysisConfig(config: DependencyAnalysisConfig): void {
+  for (const key of ['corpusComplete', 'mappingsComplete', 'caseSensitive'] as const) {
+    if (config[key] !== undefined && typeof config[key] !== 'boolean') throw new Error(`Dependency configuration ${key} must be boolean`);
+  }
+  const mappings = config.libraryMappings;
+  if (mappings !== undefined && !Array.isArray(mappings)) throw new Error('Dependency configuration libraryMappings must be an array');
+  const names = new Set<string>(); const paths = new Set<string>();
+  for (const raw of mappings ?? []) {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('Each dependency library mapping must be an object');
+    const mapping = raw as DependencyLibraryMapping;
+    if (!isValidLibraryName(mapping.libraryName)) throw new Error('Each dependency library mapping requires a non-empty printable libraryName without surrounding whitespace');
+    if (mapping.provenance !== undefined && mapping.provenance !== 'PROJECT_VERIFIED' && mapping.provenance !== 'UNKNOWN') {
+      throw new Error('Dependency mapping provenance must be PROJECT_VERIFIED or UNKNOWN');
+    }
+    const path = normalizeRelativeMappingPath(mapping.filePath);
+    const name = nameKey(mapping.libraryName, config.caseSensitive !== false);
+    if (names.has(name)) throw new Error(`Duplicate dependency library mapping for ${mapping.libraryName}`);
+    if (paths.has(path)) throw new Error(`Conflicting dependency library mappings for ${path}`);
+    names.add(name); paths.add(path);
+  }
+}
+
 function hasUnknownMappings(mappingsByPath: ReadonlyMap<string, readonly { readonly libraryName: string; readonly provenance: DependencyMappingState }[]>): boolean {
   return [...mappingsByPath.values()].some((mappings) => mappings.some(({ provenance }) => provenance !== 'PROJECT_VERIFIED'));
 }
@@ -118,6 +143,19 @@ function result(
 
 function normalizePath(value: string): string {
   return value.replaceAll('\\', '/').replace(/^\.\//u, '');
+}
+
+function normalizeRelativeMappingPath(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim()) throw new Error('Each dependency library mapping requires a non-empty filePath string');
+  const normalized = normalizePath(value);
+  if (isAbsolute(value) || /^[A-Za-z]:[\\/]/u.test(value) || normalized === '..' || normalized.startsWith('../') || normalized.split('/').some((segment) => !segment || segment === '.')) {
+    throw new Error(`Dependency mapping filePath must be a non-escaping relative path: ${value}`);
+  }
+  return normalized;
+}
+
+function isValidLibraryName(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() === value && value.length > 0 && !/[\u0000-\u001F\u007F]/u.test(value);
 }
 
 function nameKey(value: string, caseSensitive: boolean): string {

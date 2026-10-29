@@ -39,8 +39,14 @@ owner-maintained mapping file:
 ```
 
 `MISSING` is emitted only when both `corpusComplete` and `mappingsComplete` are
-true. Otherwise an unmapped static reference is `UNRESOLVED`. Computed targets
-are `DYNAMIC`; duplicate mappings are `AMBIGUOUS`.
+true **and** the actual scan has complete execution coverage. A file limit,
+load failure, skipped file, partial injected source set, or parse diagnostic
+makes effective corpus coverage incomplete and keeps an unmapped static
+reference `UNRESOLVED`. Computed targets are `DYNAMIC`; duplicate or
+conflicting owner mappings are rejected as invalid configuration.
+
+Dependency JSON/HTML reports contain relative source paths and locations only;
+they never include reviewed source content or absolute local paths.
 
 ```bash
 npm run review -- dependencies ./SM-Exports/ScriptLibrary --config ./dependency-map.json --format html --output dependencies.html

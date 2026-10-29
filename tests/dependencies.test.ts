@@ -14,6 +14,7 @@ async function analyze(files: Record<string, string>, configuration: Parameters<
   const root = resolve('dependency-test-corpus');
   return analyzeDependencies(root, {
     ...configuration,
+    executionComplete: configuration.executionComplete ?? true,
     sources: Object.entries(files).map(([file, content]) => source(root, file, content)),
   });
 }
@@ -74,16 +75,59 @@ test('does not resolve or report missing through unknown or stale mappings', asy
   assert.equal(stale.graph.references[0].status, 'UNRESOLVED');
 });
 
-test('marks duplicate mappings ambiguous and preserves deterministic candidates', async () => {
-  const result = await analyze({ 'Alpha.js': 'lib.Beta.run();', 'One.js': '', 'Two.js': '' }, {
+test('withholds MISSING whenever execution coverage is incomplete', async () => {
+  const config = { corpusComplete: true, mappingsComplete: true, libraryMappings: [{ libraryName: 'Alpha', filePath: 'Alpha.js' }] };
+  const partial = await analyze({ 'Alpha.js': 'lib.NotExported.run();' }, { ...config, executionComplete: false });
+  assert.equal(partial.corpus.declaredCorpusComplete, true);
+  assert.equal(partial.corpus.executionComplete, false);
+  assert.equal(partial.corpus.corpusComplete, false);
+  assert.equal(partial.graph.references[0].status, 'UNRESOLVED');
+  const skipped = await analyze({ 'Alpha.js': 'lib.NotExported.run();' }, { ...config, skippedFileCount: 1 });
+  assert.equal(skipped.graph.references[0].status, 'UNRESOLVED');
+  assert.equal(skipped.corpus.executionComplete, false);
+  const failed = await analyze({ 'Alpha.js': 'lib.NotExported.run();' }, { ...config, knownFailures: [{ filePath: 'Unreadable.js', message: 'sensitive local path must not leak' }] });
+  assert.equal(failed.graph.references[0].status, 'UNRESOLVED');
+  assert.equal(failed.corpus.failureCount, 1);
+  assert.doesNotMatch(JSON.stringify(failed), /sensitive local path/u);
+  const malformed = await analyze({ 'Alpha.js': 'lib.NotExported.run(); function broken( {' }, config);
+  assert.equal(malformed.graph.references[0].status, 'UNRESOLVED');
+  assert.equal(malformed.corpus.parseDiagnosticFileCount, 1);
+});
+
+test('does not serialize source content or absolute paths in dependency output', async () => {
+  const root = resolve('dependency-secret-corpus');
+  const secret = 'SM_REVIEWER_SECRET_51c4f7';
+  const result = await analyzeDependencies(root, {
+    executionComplete: true,
+    sources: [source(root, 'Alpha.js', `var token = "${secret}"; lib.Beta.run();`), source(root, 'Beta.js', '')],
+    libraryMappings: [{ libraryName: 'Alpha', filePath: 'Alpha.js' }, { libraryName: 'Beta', filePath: 'Beta.js' }],
+  });
+  const serialized = JSON.stringify(result);
+  assert.doesNotMatch(serialized, new RegExp(secret, 'u'));
+  assert.doesNotMatch(serialized, new RegExp(root.replace(/[\\/]/gu, '[\\\\/]'), 'u'));
+  assert.equal(result.graph.references[0].sourceNodeId, 'Alpha.js');
+});
+
+test('validates mapping paths, identity conflicts, provenance, and library names in core APIs', async () => {
+  const files = { 'Alpha.js': '' };
+  const invalids = [
+    [{ libraryName: 'Alpha', filePath: '../Alpha.js' }],
+    [{ libraryName: 'Alpha', filePath: 'C:\\exports\\Alpha.js' }],
+    [{ libraryName: 'Alpha', filePath: 'Alpha.js' }, { libraryName: 'Other', filePath: 'Alpha.js' }],
+    [{ libraryName: ' Alpha', filePath: 'Alpha.js' }],
+    [{ libraryName: 'Alpha', filePath: 'Alpha.js', provenance: 'UNVERIFIED' }],
+  ];
+  for (const libraryMappings of invalids) await assert.rejects(() => analyze(files, { libraryMappings: libraryMappings as never[] }));
+});
+
+test('rejects duplicate mappings at the core boundary', async () => {
+  await assert.rejects(() => analyze({ 'Alpha.js': 'lib.Beta.run();', 'One.js': '', 'Two.js': '' }, {
     libraryMappings: [
       { libraryName: 'Alpha', filePath: 'Alpha.js' },
       { libraryName: 'Beta', filePath: 'One.js' },
       { libraryName: 'Beta', filePath: 'Two.js' },
     ],
-  });
-  assert.equal(result.graph.references[0].status, 'AMBIGUOUS');
-  assert.deepEqual(result.graph.references[0].candidateNodeIds, ['One.js', 'Two.js']);
+  }), /Duplicate dependency library mapping/u);
 });
 
 test('uses exact library names by default and normalizes Windows mapping paths', async () => {
@@ -103,6 +147,21 @@ test('uses exact library names by default and normalizes Windows mapping paths',
     ],
   });
   assert.equal(insensitive.graph.references[0].status, 'RESOLVED');
+});
+
+test('treats block, destructuring, parameter, nested, and catch bindings of lib as shadowed', async () => {
+  const result = await analyze({
+    'Alpha.js': [
+      'lib.Beta.run();',
+      '{ const { lib } = options; lib.Beta.run(); }',
+      'function first(lib) { lib.Beta.run(); }',
+      'function second({ lib }) { lib.Beta.run(); }',
+      'function nested() { { let lib = local; lib.Beta.run(); } }',
+      'try {} catch ({ lib }) { lib.Beta.run(); }',
+    ].join('\n'),
+    'Beta.js': '',
+  }, { libraryMappings: mappings });
+  assert.deepEqual(result.graph.references.map(({ status }) => status), ['RESOLVED', 'UNRESOLVED', 'UNRESOLVED', 'UNRESOLVED', 'UNRESOLVED', 'UNRESOLVED']);
 });
 
 test('builds cycles, reverse impact, multiple changes and self references without recursion', async () => {

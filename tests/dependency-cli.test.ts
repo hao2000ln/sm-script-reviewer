@@ -13,7 +13,8 @@ function run(...args: string[]) {
 
 test('dependency CLI emits stable JSON, escaped HTML, and reverse impact', async () => {
   const root = await mkdtemp(join(tmpdir(), 'sm-dependency-cli-'));
-  const config = join(root, 'dependencies.json'); const html = join(root, 'dependencies.html');
+  const configRoot = await mkdtemp(join(tmpdir(), 'sm-dependency-config-'));
+  const config = join(configRoot, 'dependencies.json'); const html = join(root, 'dependencies.html');
   try {
     await Promise.all([
       writeFile(join(root, 'Alpha.js'), 'lib.Beta.run(); lib[dynamic].run(); lib["<unsafe>"].run();', 'utf8'),
@@ -42,12 +43,13 @@ test('dependency CLI emits stable JSON, escaped HTML, and reverse impact', async
     assert.doesNotMatch(content, /(?:src|href)="https?:/u);
     assert.match(content, /&lt;unsafe&gt;/u);
     assert.doesNotMatch(content, /<unsafe>/u);
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally { await Promise.all([rm(root, { recursive: true, force: true }), rm(configRoot, { recursive: true, force: true })]); }
 });
 
 test('dependency CLI validates impact input and reports missing only for complete corpus', async () => {
   const root = await mkdtemp(join(tmpdir(), 'sm-dependency-cli-missing-'));
-  const config = join(root, 'dependencies.json');
+  const configRoot = await mkdtemp(join(tmpdir(), 'sm-dependency-config-'));
+  const config = join(configRoot, 'dependencies.json');
   try {
     await writeFile(join(root, 'Alpha.js'), 'lib.NotExported.run();', 'utf8');
     await writeFile(config, JSON.stringify({ corpusComplete: true, mappingsComplete: true, libraryMappings: [{ libraryName: 'Alpha', filePath: 'Alpha.js' }] }), 'utf8');
@@ -56,7 +58,7 @@ test('dependency CLI validates impact input and reports missing only for complet
     assert.equal(JSON.parse(missing.stdout).analysis.graph.references[0].status, 'MISSING');
     const invalid = run('impact', root, '--config', config);
     assert.equal(invalid.status, 2);
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally { await Promise.all([rm(root, { recursive: true, force: true }), rm(configRoot, { recursive: true, force: true })]); }
 });
 
 test('dependency CLI rejects malformed configuration without writing a report', async () => {
