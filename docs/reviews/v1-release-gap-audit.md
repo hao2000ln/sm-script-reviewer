@@ -52,22 +52,29 @@ for the committed baseline snapshot.
 This corpus is incomplete evidence only. It does not establish full SM 9.8x
 runtime semantics, complete ScriptLibrary coverage, or human UAT acceptance.
 
-## Reproducible verification at reviewed implementation revision
+## Reproducible verification at the Release 1.0 candidate worktree
 
-The reviewer implementation revision is `4d94d9b`. The export corpus has no
-Git revision at that commit because `ESD_CRUD_NQ.js` is not tracked; its
-baseline-specific revision is therefore unavailable.
+The last committed reviewer revision inspected here is `4d94d9b`. Release
+candidate changes remain in the local working tree pending owner review and
+Git operations. The export corpus has no Git revision at that commit because
+`ESD_CRUD_NQ.js` is not tracked; its baseline-specific revision is therefore
+unavailable.
 
 The following local checks were executed without AI or SM Connector access:
 
 - TypeScript build: passed.
-- Full root unit suite: passed.
+- Full root unit suite: passed, **188/188**.
 - Acceptance suite: passed, 17/17.
-- Extension build and tests: passed, 24/24.
+- Sprint 4 offline UAT: passed, 9/9 (localhost mock only).
+- Extension build and tests: passed, **26/26**.
 - CLI `v1-production` review of the current local corpus: completed with the
-  expected exit code 1 for 4 `SM-RC-001` findings across 12 files; no parser,
+  expected exit code 1 for 4 findings across 12 files; no parser,
   rule, or file failures.
-- VSIX package and archive inspection: passed (186 archive entries).
+- Dependency CLI scan of the same corpus: completed with exit code 0; 12
+  files, 20 `UNRESOLVED` references, zero resolved edges and zero cycles. No
+  owner-maintained runtime-name mapping was supplied, so this is deliberately
+  not evidence of missing libraries.
+- VSIX package and archive inspection: passed (193 archive entries).
 
 These are automated/code evidence only. No normal-VS-Code manual UAT or SM
 9.8x runtime verification is claimed here.

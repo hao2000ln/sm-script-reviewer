@@ -1,4 +1,4 @@
-import { relative, resolve } from 'node:path';
+import { relative } from 'node:path';
 import type { SourceDocument } from '../core/types';
 import type {
   DependencyAnalysisConfig,
@@ -22,7 +22,10 @@ export function createDependencyIndex(
   const normalizedConfig = {
     corpusComplete: config.corpusComplete === true,
     mappingsComplete: config.mappingsComplete === true,
-    caseSensitive: config.caseSensitive === true,
+    // Matching is exact unless the project explicitly opts into case folding.
+    // ScriptLibrary names are deployment identities, so silently folding case
+    // can turn a configuration error into a false resolved edge.
+    caseSensitive: config.caseSensitive !== false,
   };
   const nodeByPath = new Map<string, DependencyNode>();
   const mappingsByPath = new Map<string, { readonly libraryName: string; readonly provenance: DependencyMappingState }[]>();
@@ -60,7 +63,7 @@ export function createDependencyIndex(
   }
   const nodes = [...nodeByPath.values()].sort(compareNodes);
   const candidatesByName = new Map<string, DependencyNode[]>();
-  for (const node of nodes) if (node.libraryName) {
+  for (const node of nodes) if (node.libraryName && node.mappingState === 'PROJECT_VERIFIED') {
     const key = nameKey(node.libraryName, normalizedConfig.caseSensitive);
     const values = candidatesByName.get(key) ?? [];
     values.push(node);
@@ -72,6 +75,7 @@ export function createDependencyIndex(
     resolve(sourceNodeId, reference) {
       if (reference.shadowed) return result(sourceNodeId, reference, 'UNRESOLVED', [], 'lib is lexically shadowed; no SM global library reference is assumed.');
       if (!reference.libraryName) return result(sourceNodeId, reference, 'DYNAMIC', [], 'Computed library target is dynamic and is not resolved.');
+      const mappingPaths = mappedNames.get(nameKey(reference.libraryName, normalizedConfig.caseSensitive)) ?? [];
       const candidates = [...(candidatesByName.get(nameKey(reference.libraryName, normalizedConfig.caseSensitive)) ?? [])]
         .sort(compareNodes);
       if (candidates.length === 1 && !candidates[0].duplicateLibraryName) {
@@ -80,12 +84,19 @@ export function createDependencyIndex(
       if (candidates.length > 1 || candidates.some((candidate) => candidate.duplicateLibraryName)) {
         return result(sourceNodeId, reference, 'AMBIGUOUS', candidates, 'Multiple explicit library mappings match this reference.');
       }
-      if (normalizedConfig.corpusComplete && normalizedConfig.mappingsComplete) {
+      if (mappingPaths.length > 0) {
+        return result(sourceNodeId, reference, 'UNRESOLVED', [], 'A configured mapping is not present as a project-verified source node in this corpus.');
+      }
+      if (normalizedConfig.corpusComplete && normalizedConfig.mappingsComplete && !hasUnknownMappings(mappingsByPath)) {
         return result(sourceNodeId, reference, 'MISSING', [], 'Complete corpus and complete explicit mapping contain no matching library.');
       }
       return result(sourceNodeId, reference, 'UNRESOLVED', [], 'No explicit library mapping is available; incomplete corpus or mapping prevents a missing-reference claim.');
     },
   };
+}
+
+function hasUnknownMappings(mappingsByPath: ReadonlyMap<string, readonly { readonly libraryName: string; readonly provenance: DependencyMappingState }[]>): boolean {
+  return [...mappingsByPath.values()].some((mappings) => mappings.some(({ provenance }) => provenance !== 'PROJECT_VERIFIED'));
 }
 
 function result(

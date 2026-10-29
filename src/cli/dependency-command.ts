@@ -52,5 +52,20 @@ async function loadConfig(path: string): Promise<DependencyAnalysisConfig> {
   try { value = JSON.parse(await readFile(resolve(path), 'utf8')) as unknown; }
   catch (error) { throw new Error(`Cannot read dependency configuration: ${error instanceof Error ? error.message : String(error)}`); }
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Dependency configuration must be an object');
-  return value as DependencyAnalysisConfig;
+  const config = value as Record<string, unknown>;
+  for (const key of ['corpusComplete', 'mappingsComplete', 'caseSensitive']) {
+    if (config[key] !== undefined && typeof config[key] !== 'boolean') throw new Error(`Dependency configuration ${key} must be boolean`);
+  }
+  if (config.libraryMappings !== undefined && !Array.isArray(config.libraryMappings)) throw new Error('Dependency configuration libraryMappings must be an array');
+  for (const mapping of config.libraryMappings ?? []) {
+    if (typeof mapping !== 'object' || mapping === null || Array.isArray(mapping)) throw new Error('Each dependency library mapping must be an object');
+    const entry = mapping as Record<string, unknown>;
+    if (typeof entry.libraryName !== 'string' || !entry.libraryName.trim() || typeof entry.filePath !== 'string' || !entry.filePath.trim()) {
+      throw new Error('Each dependency library mapping requires non-empty libraryName and filePath strings');
+    }
+    if (entry.provenance !== undefined && entry.provenance !== 'PROJECT_VERIFIED' && entry.provenance !== 'UNKNOWN') {
+      throw new Error('Dependency mapping provenance must be PROJECT_VERIFIED or UNKNOWN');
+    }
+  }
+  return config as DependencyAnalysisConfig;
 }

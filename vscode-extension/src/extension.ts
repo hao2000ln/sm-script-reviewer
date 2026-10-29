@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { join } from 'node:path';
 import { OpenAICompatibleProvider } from '../../src/ai/openai-compatible-provider';
 import { createBuiltinRuleRegistry } from '../../src/rules/builtin';
 import type { FindingEvidence } from '../../src/rules/types';
@@ -18,7 +19,7 @@ import { reviewFolder } from './folder-review-adapter';
 import { analyzeDependencyFolder } from './dependency-adapter';
 import { calculateImpact } from '../../src/dependencies/graph';
 import { renderDependencyText, type DependencyReport } from '../../src/dependencies/report';
-import type { DependencyAnalysisConfig, DependencyAnalysisResult } from '../../src/dependencies/types';
+import type { DependencyAnalysisConfig, DependencyAnalysisResult, ResolvedDependencyReference } from '../../src/dependencies/types';
 import { TOOL_VERSION } from '../../src/core/version';
 import { localizeDiagnostic, localizeRuleMetadata, resolveLanguage } from './localization';
 
@@ -131,9 +132,19 @@ class ExtensionReviewController implements vscode.HoverProvider {
     const filePath = active.fileName.replace(this.#dependencyRoot, '').replace(/^[/\\]/u, '').replaceAll('\\', '/');
     const node = this.#dependencyAnalysis.graph.nodes.find((item) => item.filePath === filePath);
     if (!node) { void this.api.window.showInformationMessage('SM Reviewer: active document is outside the analyzed dependency folder.'); return; }
-    const values = this.#dependencyAnalysis.graph.edges.filter((edge) => reverse ? edge.toNodeId === node.id : edge.fromNodeId === node.id)
-      .map((edge) => reverse ? edge.fromNodeId : edge.toNodeId);
-    void this.api.window.showInformationMessage(`SM Reviewer: ${reverse ? 'reverse' : 'direct'} dependencies for ${node.libraryName ?? node.filePath}: ${values.join(', ') || 'none'}.`);
+    const edges = this.#dependencyAnalysis.graph.edges.filter((edge) => reverse ? edge.toNodeId === node.id : edge.fromNodeId === node.id);
+    if (edges.length === 0) {
+      void this.api.window.showInformationMessage(`SM Reviewer: ${reverse ? 'reverse' : 'direct'} dependencies for ${node.libraryName ?? node.filePath}: none.`);
+      return;
+    }
+    const selected = await this.api.window.showQuickPick(edges.flatMap((edge) => edge.references.map((reference) => ({
+      label: reverse ? edge.fromNodeId : edge.toNodeId,
+      description: `${reference.sourceNodeId}:${reference.range.start.line}:${reference.range.start.column}`,
+      reference,
+    }))).sort((left, right) => `${left.label}\u0000${left.description}`.localeCompare(`${right.label}\u0000${right.description}`)), {
+      placeHolder: `SM Reviewer: select a ${reverse ? 'dependent' : 'dependency'} reference to open`,
+    });
+    if (selected) await this.openDependencyReference(selected.reference);
   }
 
   showCycles(): void {
@@ -396,6 +407,16 @@ class ExtensionReviewController implements vscode.HoverProvider {
 
   private dependencyConfig(): DependencyAnalysisConfig {
     return this.setting<DependencyAnalysisConfig>('dependencies.config') ?? {};
+  }
+
+  private async openDependencyReference(reference: ResolvedDependencyReference): Promise<void> {
+    if (!this.#dependencyRoot) return;
+    const document = await this.api.workspace.openTextDocument(this.api.Uri.file(join(this.#dependencyRoot, reference.sourceNodeId)));
+    const start = new this.api.Position(Math.max(0, reference.range.start.line - 1), Math.max(0, reference.range.start.column - 1));
+    const end = new this.api.Position(Math.max(start.line, reference.range.end.line - 1), Math.max(0, reference.range.end.column - 1));
+    const editor = await this.api.window.showTextDocument(document);
+    editor.selection = new this.api.Selection(start, end);
+    editor.revealRange(new this.api.Range(start, end));
   }
 
   private language() { return resolveLanguage(this.setting('language') as 'vi' | 'en' | 'auto', this.api.env.language); }

@@ -32,7 +32,7 @@ async function main() {
     return;
   }
   if (command !== 'inspect' || !target) {
-    console.error('Usage: sm-review <inspect|review> <file-or-folder> [--json]');
+    console.error('Usage: sm-review <inspect|review|dependencies|impact> <file-or-folder> [options]');
     process.exitCode = 2;
     return;
   }

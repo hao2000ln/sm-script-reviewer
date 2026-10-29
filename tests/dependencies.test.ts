@@ -55,6 +55,25 @@ test('requires declared complete corpus and mappings before reporting missing li
   assert.equal(missing.graph.references[0].status, 'MISSING');
 });
 
+test('does not resolve or report missing through unknown or stale mappings', async () => {
+  const unknown = await analyze({ 'Alpha.js': 'lib.Beta.run();' }, {
+    corpusComplete: true, mappingsComplete: true,
+    libraryMappings: [
+      { libraryName: 'Alpha', filePath: 'Alpha.js' },
+      { libraryName: 'Beta', filePath: 'Beta.js', provenance: 'UNKNOWN' },
+    ],
+  });
+  assert.equal(unknown.graph.references[0].status, 'UNRESOLVED');
+  const stale = await analyze({ 'Alpha.js': 'lib.Beta.run();' }, {
+    corpusComplete: true, mappingsComplete: true,
+    libraryMappings: [
+      { libraryName: 'Alpha', filePath: 'Alpha.js' },
+      { libraryName: 'Beta', filePath: 'Beta.js' },
+    ],
+  });
+  assert.equal(stale.graph.references[0].status, 'UNRESOLVED');
+});
+
 test('marks duplicate mappings ambiguous and preserves deterministic candidates', async () => {
   const result = await analyze({ 'Alpha.js': 'lib.Beta.run();', 'One.js': '', 'Two.js': '' }, {
     libraryMappings: [
@@ -65,6 +84,25 @@ test('marks duplicate mappings ambiguous and preserves deterministic candidates'
   });
   assert.equal(result.graph.references[0].status, 'AMBIGUOUS');
   assert.deepEqual(result.graph.references[0].candidateNodeIds, ['One.js', 'Two.js']);
+});
+
+test('uses exact library names by default and normalizes Windows mapping paths', async () => {
+  const result = await analyze({ 'nested/Alpha.js': 'lib.Beta.run();', 'nested/Beta.js': '' }, {
+    libraryMappings: [
+      { libraryName: 'Alpha', filePath: 'nested\\Alpha.js' },
+      { libraryName: 'beta', filePath: 'nested\\Beta.js' },
+    ],
+  });
+  assert.equal(result.corpus.caseSensitive, true);
+  assert.equal(result.graph.references[0].status, 'UNRESOLVED');
+  const insensitive = await analyze({ 'nested/Alpha.js': 'lib.Beta.run();', 'nested/Beta.js': '' }, {
+    caseSensitive: false,
+    libraryMappings: [
+      { libraryName: 'Alpha', filePath: 'nested\\Alpha.js' },
+      { libraryName: 'beta', filePath: 'nested\\Beta.js' },
+    ],
+  });
+  assert.equal(insensitive.graph.references[0].status, 'RESOLVED');
 });
 
 test('builds cycles, reverse impact, multiple changes and self references without recursion', async () => {
@@ -83,8 +121,31 @@ test('builds cycles, reverse impact, multiple changes and self references withou
   assert.deepEqual(impact.unknownChanged, ['Unknown']);
 });
 
+test('does not convert an outgoing dependency from a cycle into a larger false cycle', async () => {
+  const result = await analyze({
+    'Alpha.js': 'lib.Beta.run(); lib.Outside.run();',
+    'Beta.js': 'lib.Alpha.run();',
+    'Outside.js': '',
+  }, { libraryMappings: [...mappings, { libraryName: 'Outside', filePath: 'Outside.js' }] });
+  assert.deepEqual(result.graph.cycles, [['Alpha.js', 'Beta.js']]);
+});
+
 test('retains parse-recovery corpus evidence without executing source', async () => {
   const result = await analyze({ 'Alpha.js': 'lib.Beta.run(); function broken( {', 'Beta.js': '' }, { libraryMappings: mappings });
   assert.deepEqual(result.parseDiagnosticFiles, ['Alpha.js']);
   assert.equal(result.graph.references[0].status, 'RESOLVED');
+});
+
+test('calculates impact for a large synthetic chain without recursive traversal', async () => {
+  const files: Record<string, string> = {};
+  const libraryMappings = [] as { libraryName: string; filePath: string }[];
+  for (let index = 0; index < 300; index += 1) {
+    const name = `Library${index}`;
+    files[`${name}.js`] = index === 0 ? '' : `lib.Library${index - 1}.run();`;
+    libraryMappings.push({ libraryName: name, filePath: `${name}.js` });
+  }
+  const result = await analyze(files, { libraryMappings });
+  const impact = calculateImpact(result.graph, ['Library0']);
+  assert.equal(impact.directDependents.length, 1);
+  assert.equal(impact.indirectDependents.length, 298);
 });

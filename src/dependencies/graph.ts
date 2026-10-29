@@ -89,10 +89,28 @@ function stronglyConnectedCycles(nodes: readonly DependencyNode[], edges: readon
   }
   const assigned = new Set<string>(); const components: string[][] = [];
   for (const start of [...finish].reverse()) if (!assigned.has(start)) {
-    const component = traverse(reverse, new Set([start])); for (const id of component) assigned.add(id);
+    // In the second Kosaraju pass, traversal must not cross into a component
+    // already assigned by an earlier finishing-time root. Without this guard a
+    // one-way edge leaving an SCC can be pulled into a false cycle.
+    const component = traverseUnassigned(reverse, start, assigned);
+    for (const id of component) assigned.add(id);
     const values = [...component].sort();
     const selfReference = values.length === 1 && (forward.get(values[0]) ?? []).includes(values[0]);
     if (values.length > 1 || selfReference) components.push(values);
   }
   return components.sort((left, right) => left[0].localeCompare(right[0]));
+}
+
+function traverseUnassigned(
+  adjacencyMap: ReadonlyMap<string, readonly string[]>,
+  start: string,
+  assigned: ReadonlySet<string>,
+): Set<string> {
+  const visited = new Set<string>([start]); const queue = [start];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const next of adjacencyMap.get(queue[index]) ?? []) {
+      if (!assigned.has(next) && !visited.has(next)) { visited.add(next); queue.push(next); }
+    }
+  }
+  return visited;
 }
